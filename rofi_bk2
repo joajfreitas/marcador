@@ -1,0 +1,63 @@
+#!/bin/bash
+
+run_rofi () {
+	rofi -dmenu -p "> " "$@"
+}
+
+addBookmark () {
+	URL=$(run_rofi -mesg "Insert an url.")
+	if [[ $? -eq 1 ]]; then
+		exit
+	fi
+	TAGS=$(run_rofi -mesg "Insert some comma separated tags.")
+	if [[ $? -eq 1 ]]; then
+		exit
+	fi
+
+	./bk2 -a $URL, $TAGS $DB
+}
+
+openURL () {
+	number=$1
+	n=$number | tr "." "\n" | head -n1
+	$BROWSER $(./bk2 -f $n $DB)
+}
+
+listTags () {
+	tag=$(./bk2 -l $DB | run_rofi -mesg "Enter to select tag.")
+	if [[ $? -eq 1 ]] ; then
+		exit
+	fi
+	url=$(./bk2 -t $tag $DB | run_rofi -mesg "Enter to select a bookmark")
+	if [[ $? -eq 1 ]] ; then
+		exit
+	fi
+	openURL $url
+}
+
+main () {
+	selection=$(./bk2 -p $DB | run_rofi -kb-custom-1 "${new_bookmark}" -kb-custom-2 "${list_tags}" -mesg "Enter to select a bookmark. Add a new one with Alt+n.
+Or search for tags with Alt+t.")
+	val=$?
+	if [[ $val -eq 1 ]]; then
+		exit
+	elif [[ $val -eq 10 ]]; then
+		addBookmark
+	elif [[ $val -eq 11 ]]; then
+		listTags
+	else
+		openURL $selection
+	fi
+
+
+}
+
+DB=buku
+
+#shortcuts
+new_bookmark="Alt+n"
+list_tags="Alt+t"
+
+touch $DB &
+
+main
