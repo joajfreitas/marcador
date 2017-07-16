@@ -9,7 +9,7 @@ CFLAGS=-O3 -Wall -Wextra -pedantic
 CPPFLAGS=-MP -MMD
 LDFLAGS=
 CC=gcc
-SRC=$(wildcard *.c)
+SRC=$(wildcard src/*.c)
 EXEC=bookmarks
 
 all:
@@ -23,13 +23,10 @@ $(EXEC): $(SRC:%.c=%.o)
 
 -include $(SRC:%.c=%.d)
 
-dist:
-	tar -cvf bookmarks-v$(VERSION).tar.gz ../bookmarks
-
 dist: clean
 	@echo creating dist tarball
 	@mkdir -p bookmarks-$(VERSION)
-	@cp -R LICENSE Makefile *.c *.h README.md bookmarks-${VERSION}
+	@cp -R LICENSE Makefile src/*.c src/*.h README.md bookmarks-${VERSION}
 	@tar -cf bookmarks-${VERSION}.tar bookmarks-${VERSION}
 	@gzip bookmarks-${VERSION}.tar
 	@rm -rf bookmarks-${VERSION}
