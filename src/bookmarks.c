@@ -24,11 +24,12 @@
 
 void
 print_bookmark(Bookmark *bk, FILE *stream) {
-	fprintf(stream, "%d. %s - ", bk->index, bk->url);
+	fprintf(stream, "%d. %s ", bk->index, bk->url);
 	if (bk->tags[0]) {
 		fprintf(stream, "%s", bk->tags[0]);
 	}
-	for (int i=1; bk->tags[i]; i++) fprintf(stream, ",%s", bk->tags[i]);
+	for (int i=1; bk->tags[i]; i++) 
+		fprintf(stream, ",%s", bk->tags[i]);
 	fputc('\n', stream);
 }
 
@@ -56,7 +57,6 @@ read_bookmarks(FILE *db) {
 Bookmark *
 read_bookmark(char *buffer, char *tok) {
 	char *aux;
-	char *tmp;
 	Bookmark *bookmark = (Bookmark *) malloc(sizeof(Bookmark));
 
 	bookmark->url = (char *) malloc(sizeof(char) * STRING_LEN);
@@ -65,20 +65,18 @@ read_bookmark(char *buffer, char *tok) {
 	}
 
 	bookmark->index = atoi(strtok_r(buffer, ".", &tok));
-	strcpy(bookmark->url, strtok_r(NULL, " - ", &tok));
+	strcpy(bookmark->url, strtok_r(NULL, " ", &tok));
 
-	tmp = tok+2;
-	
-	bookmark->tags[0] = (char *) malloc(sizeof(char) * STRING_LEN);
 
-	char *tag_tok = strtok_r(NULL, "", &tmp);
+	char *tag_tok = strtok_r(NULL, " ", &tok);
 	if (!tag_tok) {
 		return bookmark;
 	}
-	strcpy(bookmark->tags[0], strtok_r(tag_tok, ",", &tmp));
+	bookmark->tags[0] = (char *) malloc(sizeof(char) * STRING_LEN);
+	strcpy(bookmark->tags[0], strtok_r(tag_tok, ",", &tok));
 
 	for (int i=1; ; i++) {
-		aux =  strtok_r(NULL, ",", &tmp);
+		aux =  strtok_r(NULL, ",", &tok);
 		if (aux == NULL)
 			break;
 

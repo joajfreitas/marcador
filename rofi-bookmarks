@@ -35,7 +35,9 @@ listTags () {
 }
 
 main () {
-	selection=$(bookmarks -p $DB | run_rofi -kb-custom-1 "${new_bookmark}" -kb-custom-2 "${list_tags}" -mesg "Enter to select a bookmark. Add a new one with Alt+n.
+
+
+	selection=$(bookmarks -p $DB | awk 'NF == 2 { $0 = $0 "No tag" }; { $2 = substr($2,0,60); print $1"\t"$2"\t"$3}' | column -t | run_rofi -kb-custom-1 "${new_bookmark}" -kb-custom-2 "${list_tags}" -mesg "Enter to select a bookmark. Add a new one with Alt+n.
 Or search for tags with Alt+t.")
 	val=$?
 	if [[ $val -eq 1 ]]; then

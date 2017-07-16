@@ -1,10 +1,10 @@
 VERSION=0.1
 PREFIX=/usr/local
 
-CFLAGS=-O3 -Wall -Wextra -pedantic
+#CFLAGS=-O3 -Wall -Wextra -pedantic
 #CFLAGS=-Wall -Wextra -pedantic
 #CFLAGS=-g -pg -Wall -Wextra -pedantic
-#CFLAGS=-g
+CFLAGS=-g
 #CFLAGS=-g -Wall
 CPPFLAGS=-MP -MMD
 LDFLAGS=
