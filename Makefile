@@ -39,7 +39,7 @@ install: all
 	@chmod 755 $(DESTDIR)${PREFIX}/bin/bookmarks $(DESTDIR)${PREFIX}/bin/rofi-bookmarks
 
 clean:
-	rm -rf *.o *.d *.out* $(EXEC) .dummy doc tags
+	rm -rf **/*.o **/*.d *.out* $(EXEC) .dummy doc tags
 
 # This rebuilds everything if the Makefile was modified
 # http://stackoverflow.com/questions/3871444/making-all-rules-depend-on-the-makefile-itself/3892826#3892826
