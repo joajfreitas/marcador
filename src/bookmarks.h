@@ -18,6 +18,7 @@ typedef struct Bookmarks {
 } Bookmarks;
 
 void print_bookmark(Bookmark *bk, FILE *stream);
+void write_bookmarks(Bookmarks *bookmarks, FILE *stream);
 Bookmarks *read_bookmarks(FILE *db);
 Bookmark *read_bookmark(char *buffer, char *tok);
 void insert_bookmark(Bookmarks *bookmarks, Bookmark *bookmark);

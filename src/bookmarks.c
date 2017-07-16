@@ -33,6 +33,26 @@ print_bookmark(Bookmark *bk, FILE *stream) {
 	fputc('\n', stream);
 }
 
+void 
+write_bookmarks(Bookmarks *bookmarks, FILE *stream) {
+	int index=0;
+	Bookmark *aux;
+	for (int i=0; i<bookmarks->size-1; i++) {
+		aux = bookmarks->bookmarks[i];
+		if (aux) {
+			fprintf(stream, "%d. %s ", index, aux->url);
+			if (aux->tags[0]) {
+				fprintf(stream, "%s", aux->tags[0]);
+			}
+			for (int j=1; aux->tags[j]; j++) 
+				fprintf(stream, ",%s", aux->tags[j]);
+			fputc('\n', stream);
+
+			index++;
+		}
+	}
+}
+
 
 Bookmarks *
 read_bookmarks(FILE *db) {
@@ -109,14 +129,11 @@ void free_bookmark(Bookmark *bk) {
 void 
 free_bookmarks(Bookmarks *bookmarks) {
 	for (int i=0; i<bookmarks->occupied; i++) {
-		free_bookmark(bookmarks->bookmarks[i]);
+		if (bookmarks->bookmarks[i]) {
+			free_bookmark(bookmarks->bookmarks[i]);
+		}
 	}
 
 	free(bookmarks->bookmarks);
 	free(bookmarks);
 }
-
-
-
-
-

@@ -22,6 +22,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include "util.h"
 #include "bookmarks.h"
@@ -66,7 +67,34 @@ add(char **tags, Bookmarks *bookmarks) {
 }
 
 void 
-tag_search(Bookmarks *bookmarks, char *query) {
+find(Bookmarks *bookmarks, char *query, bool remove) {
+	bool check_query = false;
+	for (int i=0; i<strlen(query); i++)
+		if (isdigit(query[i])) {
+			check_query = true;
+			break;
+		}
+
+	if (!check_query) {
+		printf("Invalid query\n");
+		exit(1);
+	}
+
+	unsigned int index = strtol(query, NULL, 10); 
+	if (index > bookmarks->occupied) {
+		printf("Error: Bookmark doesn't exist in DB");
+	}
+
+	printf("%s\n", bookmarks->bookmarks[index]->url);
+	if (remove) {
+		free_bookmark(bookmarks->bookmarks[index]);
+		bookmarks->bookmarks[index]=NULL;
+		printf("Removed bookmark\n");
+	}
+}
+
+void 
+tag_search(Bookmarks *bookmarks, char *query, bool remove) {
 	Bookmark *aux;
 	for (int i=0; i<bookmarks->occupied; i++) {
 		aux = bookmarks->bookmarks[i];
@@ -96,15 +124,7 @@ get_url(char *buffer) {
 
 	return buffer;
 }
-void 
-find(Bookmarks *bookmarks, char *query) {
-	unsigned int index = atoi(query);
-	if (index > bookmarks->occupied) {
-		printf("Error: Bookmark doesn't exist in DB");
-	}
 
-	printf("%s\n", bookmarks->bookmarks[index-1]->url);
-}
 unsigned long
 djb2(unsigned char *str)
 {
@@ -146,7 +166,7 @@ int
 main (int argc, char **argv)
 {
 	char *subopts, *value;
-	int opt, index, lcount;
+	int opt, index, lcount=0;
 	char *next;
 	char *tags[10] = {0};
 	arguments args = {0};
@@ -210,31 +230,29 @@ main (int argc, char **argv)
 
 	FILE *db = efopen(args.path, "r");
 	Bookmarks *bookmarks = read_bookmarks(db); 
+	fclose(db);
 
 	if (args.add) {
 		add(tags, bookmarks);
 	}
 	else if (args.tag_search) {
-		tag_search(bookmarks, args.query);
+		tag_search(bookmarks, args.query, args.remove);
+	}
+	else if (args.find) {
+		find(bookmarks, args.query, args.remove);
 	}
 	else if (args.print) {
 		print(bookmarks);
 	}
-	else if (args.find) {
-		find(bookmarks, args.query);
-	}
 	else if (args.tags_list) {
 		tag_list(bookmarks);
 	}
-
-	fclose(db);
-
+	
 	db = fopen(args.path, "w");
-	for (int i=0; i<bookmarks->occupied; i++) {
-		print_bookmark(bookmarks->bookmarks[i], db);
-	}
-	free_bookmarks(bookmarks);
+	write_bookmarks(bookmarks, db);
 	fclose(db);
+
+	free_bookmarks(bookmarks);
 
 	return 0;
 }
