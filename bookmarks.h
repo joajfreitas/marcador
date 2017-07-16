@@ -1,13 +1,27 @@
+#ifndef BOOKMARKS_H
+#define BOOKMARKS_H
+
 #include <stdlib.h>
 
-#define STRING_LEN 128
+#define STRING_LEN 256
 
-typedef struct bookmark {
+typedef struct Bookmark {
 	unsigned int index;
 	char *url;
 	char *tags[20];
-} bookmark;
+} Bookmark;
 
-void read_bookmark(char *buffer, char *tok, bookmark **bk);
+typedef struct Bookmarks {
+	Bookmark **bookmarks;
+	unsigned int occupied;
+	unsigned int size;
+} Bookmarks;
 
-void print_bookmark(bookmark *bk);
+void print_bookmark(Bookmark *bk, FILE *stream);
+Bookmarks *read_bookmarks(FILE *db);
+Bookmark *read_bookmark(char *buffer, char *tok);
+void insert_bookmark(Bookmarks *bookmarks, Bookmark *bookmark);
+void free_bookmark(Bookmark *bk);
+void free_bookmarks(Bookmarks *bookmarks);
+
+#endif
