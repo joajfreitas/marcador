@@ -7,7 +7,7 @@ CPPFLAGS=-MP -MMD
 LDFLAGS=
 CC=gcc
 SRC=$(wildcard *.c)
-EXEC=bk2
+EXEC=bookmarks
 
 all:
 	make $(EXEC)

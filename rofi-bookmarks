@@ -14,21 +14,20 @@ addBookmark () {
 		exit
 	fi
 
-	./bk2 -a $URL, $TAGS $DB
+	./bookmarks -a $URL, $TAGS $DB
 }
 
 openURL () {
 	number=$1
-	n=$number | tr "." "\n" | head -n1
-	$BROWSER $(./bk2 -f $n $DB)
+	$BROWSER $(./bookmarks -f ${number::-1} $DB)
 }
 
 listTags () {
-	tag=$(./bk2 -l $DB | run_rofi -mesg "Enter to select tag.")
+	tag=$(./bookmarks -l $DB | run_rofi -mesg "Enter to select tag.")
 	if [[ $? -eq 1 ]] ; then
 		exit
 	fi
-	url=$(./bk2 -t $tag $DB | run_rofi -mesg "Enter to select a bookmark")
+	url=$(./bookmarks -t $tag $DB | run_rofi -mesg "Enter to select a bookmark")
 	if [[ $? -eq 1 ]] ; then
 		exit
 	fi
@@ -36,7 +35,7 @@ listTags () {
 }
 
 main () {
-	selection=$(./bk2 -p $DB | run_rofi -kb-custom-1 "${new_bookmark}" -kb-custom-2 "${list_tags}" -mesg "Enter to select a bookmark. Add a new one with Alt+n.
+	selection=$(./bookmarks -p $DB | run_rofi -kb-custom-1 "${new_bookmark}" -kb-custom-2 "${list_tags}" -mesg "Enter to select a bookmark. Add a new one with Alt+n.
 Or search for tags with Alt+t.")
 	val=$?
 	if [[ $val -eq 1 ]]; then
@@ -52,7 +51,7 @@ Or search for tags with Alt+t.")
 
 }
 
-DB=buku
+DB=books
 
 #shortcuts
 new_bookmark="Alt+n"

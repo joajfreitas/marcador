@@ -1,6 +1,6 @@
-# bk2
+# bookmarks
 
 minimal bookmark manager
 
-![bk2 screenshot](./screenshot.png)
+![bookmarks screenshot](./screenshot.png)
 
