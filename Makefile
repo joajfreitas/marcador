@@ -37,6 +37,7 @@ install: all
 	@cp -f bookmarks $(DESTDIR)$(PREFIX)/bin
 	@cp -f rofi-bookmarks $(DESTDIR)$(PREFIX)/bin
 	@chmod 755 $(DESTDIR)${PREFIX}/bin/bookmarks $(DESTDIR)${PREFIX}/bin/rofi-bookmarks
+	$(MAKE) clean
 
 clean:
 	rm -rf **/*.o **/*.d *.out* $(EXEC) .dummy doc tags
