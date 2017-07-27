@@ -1,11 +1,14 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+TERM=xterm
+EDITOR=vim
 
 run_rofi () {
 	rofi -lines 15 -width 800 -dmenu -p "> " "$@"
 }
 
 addBookmark () {
-	URL=$(run_rofi -mesg "Insert an url.")
+	URL=$(xsel | head -n1 | run_rofi -mesg "Insert an url.")
 	if [[ $? -eq 1 ]]; then
 		exit
 	fi
@@ -42,26 +45,8 @@ delete () {
 }
 
 edit () {
-	bookmark=$@
-	current_date=$(date +'%s')
-	echo $bookmark > /tmp/bookmarks-$current_date
-	$TERM -e "'$EDITOR' /tmp/bookmarks-$current_date" & export pid=$!
-	kill -0 $pid
-	status=$?
-	while [ $status -eq 0 ]
-	do
-		kill -0 $pid > /dev/null 2>&1
-		status=$?
-		sleep 0.1
-	done
-	new_bookmark=$(</tmp/bookmarks-$current_date)
-
-	bookmarks -rf $(echo $bookmark | tr '.' '\n' | head -n1) $DB
-
-	url=$(echo $new_bookmark | tr ' ' '\n' | head -2 | tail -1) 
-	tags=$(echo $new_bookmark | tr ' ' '\n' | head -3 | tail -1) 
-	bookmarks -a $url, $tags $DB
-
+	id=$(echo $1 | tr '.' '\n' | head -n1)
+	bookmarks -e $id $DB
 	main
 	
 }
@@ -69,7 +54,7 @@ edit () {
 main () {
 
 
-	selection=$(bookmarks -p $DB | awk 'NF == 2 { $0 = $0 "No tag" }; { $2 = substr($2,0,70); print $1"\t"$2"\t"$3}' | column -t | run_rofi -kb-custom-1 "${new_bookmark_shortcut}" -kb-custom-2 "${list_tags_shortcut}" -kb-custom-3 "${delete_shorcut}" -kb-custom-4 "${edit_shorcut}" -mesg "Enter to select a bookmark. Alt+n to create a new one.
+	selection=$(bookmarks -p $DB | awk 'NF == 2 { $0 = $0 "No tag" }; { $2 = substr($2,0,70); print $1"\t"$2"\t"$3}' | column -t | run_rofi -kb-custom-1 "${new_bookmark_shortcut}" -kb-custom-2 "${list_tags_shortcut}" -kb-custom-3 "${delete_shortcut}" -kb-custom-4 "${edit_shorcut}" -mesg "Enter to select a bookmark. Alt+n to create a new one.
 Edit a bookmarks with Alt+a. Remove one with Alt+d. Search for tags with Alt+t.")
 	val=$?
 	if [[ $val -eq 1 ]]; then
@@ -96,7 +81,7 @@ fi
 DB=$1
 
 #shortcuts
-new_bookmark_shorcut="Alt+n"
+new_bookmark_shortcut="Alt+n"
 list_tags_shortcut="Alt+t"
 delete_shortcut="Alt+d"
 edit_shorcut="Alt+a"

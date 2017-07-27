@@ -1,20 +1,21 @@
 /* bookmarks - simple bookmark manager
  * Copyright © 2017 João Freitas
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define VERSION "0.2"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,20 +34,39 @@
 #define short(string) (string)[strlen((string))-1] == ',' ? 0 : (string)[strlen((string))-1]
 
 typedef struct arguments {
-	bool add, remove, search, tag_search, print, find, tags_list;
+	bool add, remove, search, tag_search, print, find, tags_list, edit;
 	char *query;
 	char *url;
 	char *tag_list[TAGS_MAX];
 	char *path;
 } arguments;
-	
-void 
-usage(void)
-{
-	printf("usage: bk2 \n");
+
+void
+usage(void) {
+	printf("\n\033[1mbookmarks\033[0m: simple linux bookmark manager\n$ bookmarks -h for help\n");
 }
 
-void 
+void
+copyright(void) {
+	printf("bookmarks %s - (C) 2017 João Freitas\n", VERSION);
+	printf("Released under the GNU GPL\n");
+}
+
+
+void
+help(void) {
+	printf("\033[1mbookmarks\033[0m: simple linux bookmark manager\n");
+	putchar('\n');
+	printf("-h\t\thelp\n");
+	printf("-p [mode]\tprint bookmarks\n");
+	printf("-t [tag]\tsearch bookmarks by tag\n");
+	printf("-r\t\tremove bookmark\n");
+	printf("-f [id]\t\tfind bookmark by ID\n");
+	printf("-l\t\tlist tags\n");
+	printf("-a [url] [tags]\tadd bookmark\n");
+}
+
+void
 add(char **tags, Bookmarks *bookmarks) {
 	uint64_t lines = 0;
 	char *url = tags[0];
@@ -57,16 +77,16 @@ add(char **tags, Bookmarks *bookmarks) {
 	bookmark->url = url;
 	if (bookmarks->bookmarks[0])
 		bookmark->index = bookmarks->bookmarks[bookmarks->occupied-1]->index+1;
-	else 
+	else
 		bookmark->index = 0;
 	for (int i=0; t[i] != NULL; i++) {
 		t[i][strlen(t[i])-1] = short(t[i]);
-		bookmark->tags[i] = t[i];	
+		bookmark->tags[i] = t[i];
 	}
 	insert_bookmark(bookmarks, bookmark);
 }
 
-void 
+void
 find(Bookmarks *bookmarks, char *query, bool remove) {
 	bool check_query = false;
 	for (int i=0; i<strlen(query); i++)
@@ -80,7 +100,7 @@ find(Bookmarks *bookmarks, char *query, bool remove) {
 		exit(1);
 	}
 
-	unsigned int index = strtol(query, NULL, 10); 
+	unsigned int index = strtol(query, NULL, 10);
 	if (index > bookmarks->occupied) {
 		printf("Error: Bookmark doesn't exist in DB");
 	}
@@ -93,7 +113,7 @@ find(Bookmarks *bookmarks, char *query, bool remove) {
 	}
 }
 
-void 
+void
 tag_search(Bookmarks *bookmarks, char *query, bool remove) {
 	Bookmark *aux;
 	for (int i=0; i<bookmarks->occupied; i++) {
@@ -106,10 +126,19 @@ tag_search(Bookmarks *bookmarks, char *query, bool remove) {
 	}
 }
 
-void 
-print(Bookmarks *bookmarks) {
-	for (int i=0; i<bookmarks->occupied; i++) {
-		print_bookmark(bookmarks->bookmarks[i], stdout);
+void
+print(Bookmarks *bookmarks, char *query) {
+	int option = atoi(query);
+
+	switch (option) {
+		case 0:
+			for (int i=0; i<bookmarks->occupied; i++)
+				print_bookmark(bookmarks->bookmarks[i], stdout);
+			break;
+		case 1:
+			for (int i=0; i<bookmarks->occupied; i++)
+				printf("%s\n", bookmarks->bookmarks[i]->url);
+			break;
 	}
 }
 
@@ -118,38 +147,14 @@ get_url(char *buffer) {
 	while(*buffer++ != '.') ;
 	buffer++;
 	char *aux = buffer;
-	while(*aux++ != 0) 
+	while(*aux++ != 0)
 		if (*aux == '-' && *(aux-1) == ' ' && *(aux+1) == ' ')
 			*(aux-1) = 0;
 
 	return buffer;
 }
 
-unsigned long
-djb2(unsigned char *str)
-{
-    unsigned long hash = 5381;
-    int c;
-
-    while (c = *str++)
-        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-
-    return hash;
-}
-
-char *
-get_tag(FILE *db) 
-{
-	char *buffer = (char *) malloc(sizeof(char) * 128);
-	fgets(buffer, 128, db);	
-	while(*buffer++) {
-		if (*buffer == '-' && *(buffer-1) == ' ' && *(buffer+1) == ' ')
-			return buffer+2;
-	}
-	return NULL;
-}
-
-void tag_list(Bookmarks *bookmarks) 
+void tag_list(Bookmarks *bookmarks)
 {
 	tree *t = init_tree();
 	for (int i=0; i<bookmarks->occupied; i++) {
@@ -162,6 +167,29 @@ void tag_list(Bookmarks *bookmarks)
 	print_tree(t);
 }
 
+void edit(Bookmarks *bookmarks, char *query) {
+	unsigned int id = atoi(query);
+
+	FILE *tmp = efopen("/tmp/bookmarks.tmp", "w");
+	print_bookmark(bookmarks->bookmarks[id], tmp);
+	fclose(tmp);
+
+	system("$TERM -e $EDITOR /tmp/bookmarks.tmp");
+
+	tmp = efopen("/tmp/bookmarks.tmp", "r");
+	char *buffer = malloc(sizeof(char)*256);
+	char *tok = malloc(sizeof(char)*256);
+	fgets(buffer, 256, tmp);
+	buffer[strlen(buffer)-1] = '\0';
+	Bookmark *bookmark = read_bookmark(buffer, tok);
+	
+	free(bookmarks->bookmarks[id]);
+	bookmarks->bookmarks[id] = bookmark;
+
+	free(tok);
+	free(buffer);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -172,15 +200,24 @@ main (int argc, char **argv)
 	arguments args = {0};
 	opterr = 0;
 	if (argc < 2) {
-		puts("Error: Invalid number of arguments");
+		copyright();
 		usage();
-		exit(1);
+		exit(0);
 	}
 
-	while ((opt = getopt(argc, argv, "a:t:rhp:f:l")) != -1) {
+	while ((opt = getopt(argc, argv, "a:t:rhp:f:lve:")) != -1) {
 		switch (opt) {
+			case 'h':
+				help();
+				exit(0);
+				break;
+			case 'v':
+				copyright();
+				exit(0);
+				break;
 			case 'p':
 				args.print = true;
+				args.query = optarg;
 				break;
 			case 't':
 				args.tag_search = true;
@@ -196,6 +233,10 @@ main (int argc, char **argv)
 			case 'l':
 				args.tags_list = true;
 				break;
+			case 'e':
+				args.edit = true;
+				args.query = optarg;
+				break;
 			case 'a':
 				args.add = 1;
 				index = optind-1;
@@ -208,9 +249,6 @@ main (int argc, char **argv)
 					else break;
 				}
 				optind = index - 1;
-				break;
-			case 'h':
-				usage();
 				break;
 			case '?':
 				if (optopt == 't') {
@@ -229,7 +267,7 @@ main (int argc, char **argv)
 	args.path = argv[argc-1];
 
 	FILE *db = efopen(args.path, "r");
-	Bookmarks *bookmarks = read_bookmarks(db); 
+	Bookmarks *bookmarks = read_bookmarks(db);
 	fclose(db);
 
 	if (args.add) {
@@ -242,12 +280,15 @@ main (int argc, char **argv)
 		find(bookmarks, args.query, args.remove);
 	}
 	else if (args.print) {
-		print(bookmarks);
+		print(bookmarks, args.query);
 	}
 	else if (args.tags_list) {
 		tag_list(bookmarks);
 	}
-	
+	else if (args.edit) {
+		edit(bookmarks, args.query);
+	}
+
 	db = fopen(args.path, "w");
 	write_bookmarks(bookmarks, db);
 	fclose(db);

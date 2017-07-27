@@ -1,16 +1,16 @@
 /*bookmarks - simple bookmark manager
  * Copyright © 2017 João Freitas
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -28,12 +28,12 @@ print_bookmark(Bookmark *bk, FILE *stream) {
 	if (bk->tags[0]) {
 		fprintf(stream, "%s", bk->tags[0]);
 	}
-	for (int i=1; bk->tags[i]; i++) 
+	for (int i=1; bk->tags[i]; i++)
 		fprintf(stream, ",%s", bk->tags[i]);
 	fputc('\n', stream);
 }
 
-void 
+void
 write_bookmarks(Bookmarks *bookmarks, FILE *stream) {
 	int index=0;
 	Bookmark *aux;
@@ -44,7 +44,7 @@ write_bookmarks(Bookmarks *bookmarks, FILE *stream) {
 			if (aux->tags[0]) {
 				fprintf(stream, "%s", aux->tags[0]);
 			}
-			for (int j=1; aux->tags[j]; j++) 
+			for (int j=1; aux->tags[j]; j++)
 				fprintf(stream, ",%s", aux->tags[j]);
 			fputc('\n', stream);
 
@@ -106,11 +106,11 @@ read_bookmark(char *buffer, char *tok) {
 	return bookmark;
 }
 
-void 
+void
 insert_bookmark(Bookmarks *bookmarks, Bookmark *bookmark) {
 	if (bookmarks->occupied == bookmarks->size) {
 		bookmarks->size*=2;
-		bookmarks->bookmarks = realloc(bookmarks->bookmarks, 
+		bookmarks->bookmarks = realloc(bookmarks->bookmarks,
 				sizeof(bookmarks)*bookmarks->size);
 	}
 	bookmarks->bookmarks[bookmarks->occupied++] = bookmark;
@@ -126,7 +126,7 @@ void free_bookmark(Bookmark *bk) {
 	free(bk);
 }
 
-void 
+void
 free_bookmarks(Bookmarks *bookmarks) {
 	for (int i=0; i<bookmarks->occupied; i++) {
 		if (bookmarks->bookmarks[i]) {
