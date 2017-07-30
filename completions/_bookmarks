@@ -1,0 +1,53 @@
+ #compdef bookmarks
+ _bookmarks () {
+	local cmd
+	if (( CURRENT > 2)); then
+		cmd=${words[2]}
+		# Set the context for the subcommand.
+		#curcontext="${curcontext%:*:*}:pass-$cmd"
+		# Narrow the range of words we are looking at to exclude `pass'
+		(( CURRENT-- ))
+		shift words
+		# Run the completion for the subcommand
+		case "${cmd}" in
+			print)
+				_files
+				;;
+			add)
+				_files
+				;;
+			rm)
+				_files
+				;;
+			find)
+				_files
+				;;
+			edit)
+				_files
+				;;
+			tag-search)
+				_files
+				;;
+			tag-list)
+				_files
+				;;
+		esac
+	else
+		local -a subcommands
+		subcommands=(
+			"print:Print bookmarks"
+			"add:Add a new bookmark"
+			"rm:Remove a bookmarks by its id"
+			"find:Get the url of a bookmark by its id"
+			"edit:Edit a bookmarks with $EDITOR"
+			"tag-search:Find all bookmarks with a tag"
+			"tag-list:List all tags in a file"
+		)
+		_describe -t commands 'bookmarks' subcommands
+		_arguments : \
+			"-v[Output version information]" \
+			"-h[Output help message]"
+	fi
+}
+
+ _bookmarks
