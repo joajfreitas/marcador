@@ -40,6 +40,11 @@ install: all
 	@cp completions/_bookmarks /usr/share/zsh/site-functions/_bookmarks
 	$(MAKE) clean
 
+uninstall:
+	rm -rf $(DESTDIR)$(PREFIX)/bin/bookmarks
+	rm -rf $(DESTDIR)$(PREFIX)/bin/rofi-bookmarks
+	rm -rf /usr/share/zsh/site-functions/_bookmarks
+
 clean:
 	rm -rf **/*.o **/*.d *.out* $(EXEC) .dummy doc tags
 

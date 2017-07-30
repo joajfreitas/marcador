@@ -39,7 +39,7 @@ listTags () {
 
 delete () {
 	number=$1
-	bookmarks remove ${number::-1} $DB
+	bookmarks rm ${number::-1} $DB
 
 	main
 }
@@ -74,7 +74,7 @@ Edit a bookmarks with Alt+a. Remove one with Alt+d. Search for tags with Alt+t."
 
 if [ $# -eq 0 ] 
 	then
-    echo "Please choose a bookmarks file path."
+    echo "Please choose a bookmark file path."
 	exit
 fi
 

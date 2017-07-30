@@ -31,13 +31,13 @@
 
 #define TAGS_MAX 32
 
-char *helps[] = {"\tadd url [tag0, tag1, ...] file\n\t\tAdd a new bookmark",		
+char *helps[] = {"\tprint [modifier] file\n\t\tPrint bookmarks",	
+				"\tadd url [tag0, tag1, ...] file\n\t\tAdd a new bookmark",		
 				"\trm id file\n\t\tRemove a bookmark by its id",
 				"\tfind id file\n\t\tGet the url of a bookmark by its id",
+				"\tedit id file\n\t\tEdit a bookmark with $EDITOR",
 				"\ttag-search tag book\n\t\tFind all bookmarks with a tag",
-				"\tprint [modifier] file\n\t\tPrint bookmarks: 0 - pretty print, 1 - only urls",
-				"\ttag-list file\n\t\tList all tag in a file",
-				"\tedit id file\n\t\tEdit a bookmark",
+				"\ttag-list file\n\t\tList all tags in a file",
 };
 
 void print_help(unsigned int index, FILE *output) {
@@ -260,10 +260,10 @@ edit(Bookmarks *bookmarks, char **argv, int argc) {
 int
 main (int argc, char **argv)
 {
-	char *commands[] = {"add", "rm", "find", "tag-search", "print", "list-tags", "edit"};
+	char *commands[] = {"print", "add", "rm", "find", "edit", "tag-search", "list-tags"};
 
 	void (*functions[7]) (Bookmarks *bookmarks, char **argv, int argc) = 
-	{add, rm, find, tag_search, print, list_tags, edit};	
+	{print, add, rm, find, edit, tag_search, list_tags};	
 	
 	if (!strcmp(argv[1], "-h")) {
 		help();
