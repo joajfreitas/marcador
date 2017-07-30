@@ -17,20 +17,20 @@ addBookmark () {
 		exit
 	fi
 
-	bookmarks -a $URL, $TAGS $DB
+	bookmarks add $URL $TAGS $DB
 }
 
 openURL () {
 	number=$1
-	$BROWSER $(bookmarks -f ${number::-1} $DB)
+	$BROWSER $(bookmarks find ${number::-1} $DB)
 }
 
 listTags () {
-	tag=$(bookmarks -l $DB | run_rofi -mesg "Enter to select tag.")
+	tag=$(bookmarks list-tags $DB | run_rofi -mesg "Enter to select tag.")
 	if [[ $? -eq 1 ]] ; then
 		exit
 	fi
-	url=$(bookmarks -t $tag $DB | run_rofi -mesg "Enter to select a bookmark")
+	url=$(bookmarks tag-search $tag $DB | run_rofi -mesg "Enter to select a bookmark")
 	if [[ $? -eq 1 ]] ; then
 		exit
 	fi
@@ -39,14 +39,14 @@ listTags () {
 
 delete () {
 	number=$1
-	bookmarks -rf ${number::-1} $DB
+	bookmarks remove ${number::-1} $DB
 
 	main
 }
 
 edit () {
 	id=$(echo $1 | tr '.' '\n' | head -n1)
-	bookmarks -e $id $DB
+	bookmarks edit $id $DB
 	main
 	
 }
@@ -54,7 +54,7 @@ edit () {
 main () {
 
 
-	selection=$(bookmarks -p $DB | awk 'NF == 2 { $0 = $0 "No tag" }; { $2 = substr($2,0,70); print $1"\t"$2"\t"$3}' | column -t | run_rofi -kb-custom-1 "${new_bookmark_shortcut}" -kb-custom-2 "${list_tags_shortcut}" -kb-custom-3 "${delete_shortcut}" -kb-custom-4 "${edit_shorcut}" -mesg "Enter to select a bookmark. Alt+n to create a new one.
+	selection=$(bookmarks print $DB | awk 'NF == 2 { $0 = $0 "No tag" }; { $2 = substr($2,0,70); print $1"\t"$2"\t"$3}' | column -t | run_rofi -kb-custom-1 "${new_bookmark_shortcut}" -kb-custom-2 "${list_tags_shortcut}" -kb-custom-3 "${delete_shortcut}" -kb-custom-4 "${edit_shorcut}" -mesg "Enter to select a bookmark. Alt+n to create a new one.
 Edit a bookmarks with Alt+a. Remove one with Alt+d. Search for tags with Alt+t.")
 	val=$?
 	if [[ $val -eq 1 ]]; then

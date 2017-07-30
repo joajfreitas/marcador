@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define VERSION "0.2"
+#define VERSION "0.3"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,8 +31,19 @@
 
 #define TAGS_MAX 32
 
-#define short(string) (string)[strlen((string))-1] == ',' ? 0 : (string)[strlen((string))-1]
+char *helps[] = {"\tadd url [tag0, tag1, ...] file\n\t\tAdd a new bookmark",		
+				"\trm id file\n\t\tRemove a bookmark by its id",
+				"\tfind id file\n\t\tGet the url of a bookmark by its id",
+				"\ttag-search tag book\n\t\tFind all bookmarks with a tag",
+				"\tprint [modifier] file\n\t\tPrint bookmarks: 0 - pretty print, 1 - only urls",
+				"\ttag-list file\n\t\tList all tag in a file",
+				"\tedit id file\n\t\tEdit a bookmark",
+};
 
+void print_help(unsigned int index, FILE *output) {
+	fprintf(output, "%s\n", helps[index]);
+}
+	
 typedef struct arguments {
 	bool add, remove, search, tag_search, print, find, tags_list, edit;
 	char *query;
@@ -57,78 +68,123 @@ void
 help(void) {
 	printf("\033[1mbookmarks\033[0m: simple linux bookmark manager\n");
 	putchar('\n');
-	printf("-h\t\thelp\n");
-	printf("-p [mode]\tprint bookmarks\n");
-	printf("-t [tag]\tsearch bookmarks by tag\n");
-	printf("-r\t\tremove bookmark\n");
-	printf("-f [id]\t\tfind bookmark by ID\n");
-	printf("-l\t\tlist tags\n");
-	printf("-a [url] [tags]\tadd bookmark\n");
+	printf("Usage:\n");
+	for (int i=0; i<7; i++) {
+		print_help(i, stdout);
+	}
 }
 
-void
-add(char **tags, Bookmarks *bookmarks) {
-	uint64_t lines = 0;
-	char *url = tags[0];
-	char **t = tags+1;
+/* bookmarks add url [tag0, tag1, ...] file
+ *
+ * register a url and a TODO: random number of tags
+ * TODO: check URL
+ */
 
-	url[strlen(url) - 1	] = short(url);
+void
+add(Bookmarks *bookmarks, char **argv, int argc) {
+	if (argc < 4) {
+		fprintf(stderr, "Error: Invalid number of arguments for command add!\n");
+		fprintf(stderr, "Usage: $ bookmarks add url [tag0, tag1, ...] file\n");
+		exit(1);
+	}
 	Bookmark *bookmark = (Bookmark *) malloc(sizeof(Bookmark));
-	bookmark->url = url;
+	bookmark->url = (char *) malloc(sizeof(char) * STRING_LEN);
+	strcpy(bookmark->url, argv[2]);
+
 	if (bookmarks->bookmarks[0])
 		bookmark->index = bookmarks->bookmarks[bookmarks->occupied-1]->index+1;
 	else
 		bookmark->index = 0;
-	for (int i=0; t[i] != NULL; i++) {
-		t[i][strlen(t[i])-1] = short(t[i]);
-		bookmark->tags[i] = t[i];
+	for (int i=0; i < argc-4; i++) {
+		bookmark->tags[i] = (char *) malloc(sizeof(char) * STRING_LEN);
+		strcpy(bookmark->tags[i], argv[i+3]);
 	}
+
 	insert_bookmark(bookmarks, bookmark);
 }
 
-void
-find(Bookmarks *bookmarks, char *query, bool remove) {
-	bool check_query = false;
-	for (int i=0; i<strlen(query); i++)
-		if (isdigit(query[i])) {
-			check_query = true;
-			break;
-		}
-
-	if (!check_query) {
-		printf("Invalid query\n");
+/* bookmarks rm id file
+ * Remove bookmarks by id
+ */
+void rm(Bookmarks *bookmarks, char **argv, int argc) {
+	if (argc != 4) {
+		fprintf(stderr, "Error: Invalid number of arguments for command rm!\n");
+		fprintf(stderr, "Usage: $ bookmarks rm id file\n");
 		exit(1);
 	}
 
-	unsigned int index = strtol(query, NULL, 10);
-	if (index > bookmarks->occupied) {
-		printf("Error: Bookmark doesn't exist in DB");
+	unsigned int index = atoi(argv[2]);
+	if (index >= bookmarks->occupied) {
+		fprintf(stderr, "Error: Bookmark %d not in range!\n", index);
+		exit(1);
+	}
+	free_bookmark(bookmarks->bookmarks[index]);
+	bookmarks->bookmarks[index] = NULL;
+}
+
+/* bookmarks find id file
+ * find bookmark url by id
+ */
+void
+find(Bookmarks *bookmarks, char **argv, int argc) {
+	if (argc != 4) {
+		fprintf(stderr, "Error: Invalid number of arguments for command find\n");
+		fprintf(stderr, "Usage: $ bookmarks find id file\n");
+		exit(1);
+	}
+
+	unsigned index = atoi(argv[2]);
+	if (index >= bookmarks->occupied) {
+		fprintf(stderr, "Error: Bookmark %d out of range!\n", index);
+		exit(1);
 	}
 
 	printf("%s\n", bookmarks->bookmarks[index]->url);
-	if (remove) {
-		free_bookmark(bookmarks->bookmarks[index]);
-		bookmarks->bookmarks[index]=NULL;
-		printf("Removed bookmark\n");
-	}
 }
 
+/* bookmarks tag-search tag book
+ * Find urls in a tag
+ */
 void
-tag_search(Bookmarks *bookmarks, char *query, bool remove) {
+tag_search(Bookmarks *bookmarks, char **argv, int argc) {
+	if (argc != 4) {
+		fprintf(stderr, "Error: Invalid number of arguments for command tag-search\n");
+		fprintf(stderr, "Usage: $ bookmarks tag-search tag book\n");
+		exit(1);
+	}
+
 	Bookmark *aux;
 	for (int i=0; i<bookmarks->occupied; i++) {
 		aux = bookmarks->bookmarks[i];
 		for (int j=0; aux->tags[j]; j++) {
-			if (strstr(aux->tags[j], query)) {
+			if (strstr(aux->tags[j], argv[2])) {
 				print_bookmark(aux, stdout);
 			}
 		}
 	}
 }
 
+/* bookmarks print [modifier] file
+ * modifiers: 0 - pretty print
+ *			  1 - only urls
+ */
 void
-print(Bookmarks *bookmarks, char *query) {
-	int option = atoi(query);
+print(Bookmarks *bookmarks, char **argv, int argc) {
+	if (argc > 4) {
+		fprintf(stderr, "Error: Invalid number of arguments for command print!\n");
+		fprintf(stderr, "Usage: $ bookmarks print [modifier] file\n");
+		exit(1);
+	}
+	
+	unsigned int option;
+		
+	if (argc == 3) {
+		option = 0;
+	}
+	else if (argc == 4) {
+		option = atoi(argv[2]);
+	}
+
 
 	switch (option) {
 		case 0:
@@ -139,23 +195,24 @@ print(Bookmarks *bookmarks, char *query) {
 			for (int i=0; i<bookmarks->occupied; i++)
 				printf("%s\n", bookmarks->bookmarks[i]->url);
 			break;
+		default:
+			fprintf(stderr, "Error: Unrecognized option for command print!\n");
+			exit(1);
 	}
 }
 
-char *
-get_url(char *buffer) {
-	while(*buffer++ != '.') ;
-	buffer++;
-	char *aux = buffer;
-	while(*aux++ != 0)
-		if (*aux == '-' && *(aux-1) == ' ' && *(aux+1) == ' ')
-			*(aux-1) = 0;
 
-	return buffer;
-}
+/* bookmarks tag-list file
+ * List all tags in a file
+ */
+void 
+list_tags(Bookmarks *bookmarks, char **argv, int argc) {
+	if (argc != 3) {
+		fprintf(stderr, "Error: Invalid number of arguments!\n");
+		fprintf(stderr, "Usage: bookmarks tag-list file\n");
+		exit(1);
+	}
 
-void tag_list(Bookmarks *bookmarks)
-{
 	tree *t = init_tree();
 	for (int i=0; i<bookmarks->occupied; i++) {
 		Bookmark *aux = bookmarks->bookmarks[i];
@@ -167,8 +224,18 @@ void tag_list(Bookmarks *bookmarks)
 	print_tree(t);
 }
 
-void edit(Bookmarks *bookmarks, char *query) {
-	unsigned int id = atoi(query);
+/* bookmarks edit id file
+ * Edit a bookmark
+ */
+void 
+edit(Bookmarks *bookmarks, char **argv, int argc) {
+	if (argc != 4) {
+		fprintf(stderr, "Error: Invalid number of arguments for command edit!\n");
+		fprintf(stderr, "Usage: bookmarks edit id file\n");
+		exit(1);
+	}
+
+	unsigned int id = atoi(argv[2]);
 
 	FILE *tmp = efopen("/tmp/bookmarks.tmp", "w");
 	print_bookmark(bookmarks->bookmarks[id], tmp);
@@ -193,103 +260,46 @@ void edit(Bookmarks *bookmarks, char *query) {
 int
 main (int argc, char **argv)
 {
-	char *subopts, *value;
-	int opt, index, lcount=0;
-	char *next;
-	char *tags[10] = {0};
-	arguments args = {0};
-	opterr = 0;
-	if (argc < 2) {
+	char *commands[] = {"add", "rm", "find", "tag-search", "print", "list-tags", "edit"};
+
+	void (*functions[7]) (Bookmarks *bookmarks, char **argv, int argc) = 
+	{add, rm, find, tag_search, print, list_tags, edit};	
+	
+	if (!strcmp(argv[1], "-h")) {
+		help();
+		exit(0);
+	}
+	else if (!strcmp(argv[1], "-v")) {
 		copyright();
-		usage();
 		exit(0);
 	}
 
-	while ((opt = getopt(argc, argv, "a:t:rhp:f:lve:")) != -1) {
-		switch (opt) {
-			case 'h':
-				help();
-				exit(0);
-				break;
-			case 'v':
-				copyright();
-				exit(0);
-				break;
-			case 'p':
-				args.print = true;
-				args.query = optarg;
-				break;
-			case 't':
-				args.tag_search = true;
-				args.query = optarg;
-				break;
-			case 'r':
-				args.remove = true;
-				break;
-			case 'f':
-				args.find = true;
-				args.query = optarg;
-				break;
-			case 'l':
-				args.tags_list = true;
-				break;
-			case 'e':
-				args.edit = true;
-				args.query = optarg;
-				break;
-			case 'a':
-				args.add = 1;
-				index = optind-1;
-				while (index < argc-1){
-					next = strdup(argv[index]); /* get login */
-					index++;
-					if (next[0] != '-'){         /* check if optarg is next switch */
-						tags[lcount++] = next;
-					}
-					else break;
-				}
-				optind = index - 1;
-				break;
-			case '?':
-				if (optopt == 't') {
-					printf("Please provide an argument for tag search\n");
-				}
-				else {
-					printf("Error\n");
-				}
-				exit(1);
-				break;
-			default:
-				abort();
-		}
+	if (argc < 3) {
+		printf("Error: Invalid number of arguments\n");
+		copyright();
+		usage();
+		exit(1);
 	}
 
-	args.path = argv[argc-1];
-
-	FILE *db = efopen(args.path, "r");
+	FILE *db = efopen(argv[argc-1], "r");
 	Bookmarks *bookmarks = read_bookmarks(db);
 	fclose(db);
 
-	if (args.add) {
-		add(tags, bookmarks);
-	}
-	else if (args.tag_search) {
-		tag_search(bookmarks, args.query, args.remove);
-	}
-	else if (args.find) {
-		find(bookmarks, args.query, args.remove);
-	}
-	else if (args.print) {
-		print(bookmarks, args.query);
-	}
-	else if (args.tags_list) {
-		tag_list(bookmarks);
-	}
-	else if (args.edit) {
-		edit(bookmarks, args.query);
+	bool found=false;
+	for (int i=0; i<7; i++){
+		if (!strcmp(commands[i], argv[1])) {
+			functions[i](bookmarks, argv, argc);
+			found=true;
+		}
 	}
 
-	db = fopen(args.path, "w");
+	if (!found) {
+		printf("Error: Command not found: %s!\n", argv[1]);
+		exit(1);
+	}
+
+
+	db = fopen(argv[argc-1], "w");
 	write_bookmarks(bookmarks, db);
 	fclose(db);
 
