@@ -28,7 +28,7 @@ print_bookmark(Bookmark *bk, FILE *stream) {
 	if (bk->tags[0]) {
 		fprintf(stream, "%s", bk->tags[0]);
 	}
-	for (int i=1; bk->tags[i]; i++)
+	for (int i=1; bk->tags[i] && i<20; i++)
 		fprintf(stream, ",%s", bk->tags[i]);
 	fputc('\n', stream);
 }
@@ -44,7 +44,7 @@ write_bookmarks(Bookmarks *bookmarks, FILE *stream) {
 			if (aux->tags[0]) {
 				fprintf(stream, "%s", aux->tags[0]);
 			}
-			for (int j=1; aux->tags[j]; j++)
+			for (int j=1; aux->tags[j] && i<20; j++)
 				fprintf(stream, ",%s", aux->tags[j]);
 			fputc('\n', stream);
 
@@ -119,7 +119,7 @@ insert_bookmark(Bookmarks *bookmarks, Bookmark *bookmark) {
 void free_bookmark(Bookmark *bk) {
 
 	free(bk->url);
-	for (int i=0; bk->tags[i]; i++) {
+	for (int i=0; bk->tags[i] && i<20; i++) {
 		free(bk->tags[i]);
 	}
 

@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-#define STRING_LEN 256
+#define STRING_LEN 512
 
 typedef struct Bookmark {
 	unsigned int index;
