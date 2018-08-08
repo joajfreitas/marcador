@@ -86,6 +86,4 @@ list_tags_shortcut="Alt+t"
 delete_shortcut="Alt+d"
 edit_shorcut="Alt+e"
 
-touch $DB &
-
 main
