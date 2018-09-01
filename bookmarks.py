@@ -3,7 +3,7 @@
 """Bookmarks.
 
 Usage:
-    bookmarks add <file> <url> <tags>...
+    bookmarks add <file> <url> [tags]...
     bookmarks print <file>
     bookmarks rm <file> <id>
     bookmarks find <file> <id>
@@ -42,7 +42,7 @@ def open_url(books, id):
 
 
 def add(args, books):
-    tags = args['<tags>']
+    tags = args.get('<tags>', [])
     url = args['<url>']
     file = args['<file>']
 
