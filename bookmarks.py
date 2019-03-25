@@ -3,10 +3,11 @@
 """Bookmarks.
 
 Usage:
-    bookmarks add <file> <url> [tags]...
+    bookmarks add <file> <url> <tags>...
     bookmarks print <file>
     bookmarks rm <file> <id>
-    bookmarks find <file> <id>
+    bookmarks url <file> <id>
+    bookmarks bookmark <file> <id>
     bookmarks edit <file> <id>
     bookmarks tag-search <file> <tag>
     bookmarks tag-list <file>
@@ -27,18 +28,21 @@ import json, os
 import requests
 from bs4 import BeautifulSoup
 import jinja2
+import sqlite3
 
-def write_json(dictionary, file):
-    with open(file, 'w') as file:
-        file.write(json.dumps(dictionary, indent=2))
-
+from pprint import pprint
 
 def open_url_cmd(args, books):
-    open_url(books, int(args['<id>']))
+    id = int(args['<id>'])
 
-def open_url(books, id):
+    c = books.cursor()
+
+    c.execute(f"select * from bookmarks where identifier='{id}'")
+
+    id, url, desc = c.fetchone()
+
     from webbrowser import open
-    open(books[id]['url'])
+    open(url)
 
 
 def add(args, books):
@@ -46,39 +50,86 @@ def add(args, books):
     url = args['<url>']
     file = args['<file>']
 
+    c = books.cursor()
 
-    id = len(books)
-    row = {'id' : id, 'url' : url, 'tags' : tags}
+    c.execute(f'insert into bookmarks (url) values ("{url}")')
+    book_id = c.lastrowid
+    for tag in tags:
+        c.execute(f'insert into tags (tag) values ("{tag}")')
+        tag_id = c.lastrowid
+        c.execute(f"""insert into bookmarks_tags (bookmark, tag) values
+                ("{book_id}", "{tag_id}")""")
 
-    books.append(row)
+    conn.commit()
 
-    write_json(books, file)
 
 def get_book(id, url, tags):
     return "{0}. {1} {2}".format(id, url, str(tags).replace(' ', '').replace("'", "")[1:-1])
     return s
 
-def get_books(books):
-    for row in books:
-        yield get_book(row['id'], row['url'], row['tags'])
 
 def print_books(args, books):
-    for line in get_books(books):
-        print(line)
+    c = books.cursor()
+    
+    c.execute("select * from bookmarks")
+    bookmarks = c.fetchall()
+
+    for id, url, desc in bookmarks:
+        c.execute(f"""select distinct tags.tag from bookmarks join
+        bookmarks_tags on bookmarks.identifier = bookmarks_tags.bookmark join
+        tags on bookmarks_tags.tag = tags.identifier where
+        bookmarks.url='{url}'""")
+        
+        tags = []
+        _tags = c.fetchall()
+        for _tag in _tags:
+            tag = _tag[0]
+            tags.append(tag)
+
+        print(f"{id}, {url} ", end='')
+
+        for tag in tags:
+            print(f"{tag},", end='')
+
+        print()
+
+    c.execute("""select distinct bookmarks.url, tags.tag, bookmarks_tags.tag,
+    bookmarks_tags.bookmark from bookmarks join bookmarks_tags on
+    bookmarks.identifier = bookmarks_tags.bookmark join tags on
+    bookmarks_tags.tag = tags.identifier""")
+
+    result = c.fetchall()
+
+    #pprint(result)
 
 def remove(args, books):
     id = int(args['<id>'])
     file = args['<file>']
+    
+    c = books.cursor()
 
-    books.pop(id)
-    for i, row in enumerate(books[id:]):
-        row['id'] = id+i
+    c.execute(f"delete from bookmarks_tags as bt where bt.bookmark = '{id}'")
+    c.execute(f"delete from bookmarks where identifier = '{id}'")
 
-    write_json(books, file)
+    books.commit()
 
-def find(args, books):
+
+def get_url(args, books):
     id = int(args['<id>'])
-    print(books[id]['url'])
+    c = books.cursor()
+
+    c.execute(f"select * from bookmarks where identifier='{id}'")
+    id, url, desc = c.fetchone()
+    print(url)
+
+
+def get_bookmark(args, books):
+    id = int(args['<id>'])
+    c = books.cursor()
+
+    c.execute(f"select * from bookmarks where identifier='{id}'")
+    id, url, desc = c.fetchone()
+    print(id, url, desc)
 
 def edit(args, books):
     id = int(args['<id>'])
@@ -117,15 +168,33 @@ def edit(args, books):
 
 def tag_search(args, books):
     tag = args['<tag>']
-    for row in books:
-        for t in row['tags']:
-            if t == tag:
-                print_book(row['id'], row['url'], row['tags'])
+    
+    c = books.cursor()
+    
+    c.execute(f"select identifier from tags where tag='{tag}'")
+    id = c.fetchone()[0]
+    c.execute(f"select bt.bookmark from bookmarks_tags as bt where bt.tag = {id}")
+    bookmarks = c.fetchall()
+    for book in bookmarks:
+        print(book[0])
+
+    #c.execute("select * from bookmarks_tags where 
+#    for row in books:
+#        for t in row['tags']:
+#            if t == tag:
+#                print_book(row['id'], row['url'], row['tags'])
+
+
 
 def tag_list(args, books):
-    tags = [tag for row in books for tag in row['tags']]
-    for tag in set(tags):
-        print(tag)
+    c = books.cursor()
+
+    c.execute("select tag from tags")
+    tags = c.fetchall()
+
+    for tag in tags:
+        print(tag[0])
+
 
 def update_metadata(args, books):
     file = args['<file>']
@@ -159,15 +228,49 @@ def html(args, books):
     with open(output, 'w') as file:
         file.write(template.render(bookmarks=bookmarks))
 
+def do_nothing(args, books):
+    return
+
 def read_db(file):
+    print("read file")
     with open(file) as f:
         return json.loads(f.read())
+
+
+def set_default_db(books_file):
+    conn = open_db(books_file)
+    c = conn.cursor()
+
+    c.execute("""CREATE TABLE bookmarks (
+        identifier INTEGER PRIMARY KEY, 
+        url TEXT, 
+        description TEXT)
+        """
+    )
+
+    c.execute("""CREATE TABLE tags (
+        identifier INTEGER PRIMARY KEY, 
+        tag TEXT)
+        """
+    )
+    c.execute("""CREATE TABLE bookmarks_tags (
+        bookmark REFERENCES bookmarks(identifier), 
+        tag REFERENCES tags(identifier))
+        """
+    )
+    conn.commit()
+
+    return conn
+
+def open_db(books_file):
+    return sqlite3.connect(books_file)
 
 function_map = {
     'add' : add,
     'print' : print_books,
     'rm' : remove,
-    'find' : find,
+    'url' : get_url,
+    'bookmark' : get_bookmark,
     'edit' : edit,
     'tag-search' : tag_search,
     'tag-list' : tag_list,
@@ -180,12 +283,17 @@ if __name__ == "__main__":
     arguments = docopt(__doc__, version='Bookmarks 0.1')
     books_file = arguments['<file>']
 
+    conn = None
+
     if not os.path.isfile(books_file):
-        with open(books_file, "w") as file:
-            file.write("[]")
-
-    books = read_db(books_file)
-
-    for name, function in function_map.items():
+        print("create default")
+        conn = set_default_db(books_file)
+    
+    if not conn:
+        conn = open_db(books_file)
+   
+    for name, fn in function_map.items():
         if arguments[name]:
-            function(arguments, books)
+            function_map[name](arguments,conn)
+
+    conn.close()

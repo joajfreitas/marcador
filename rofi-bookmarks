@@ -22,7 +22,7 @@ addBookmark () {
 
 openURL () {
 	number=$1
-	$BROWSER $(bookmarks find $DB ${number::-1})
+	$BROWSER $(bookmarks url $DB $number)
 }
 
 listTags () {
@@ -57,6 +57,8 @@ main () {
 	selection=$(bookmarks print $DB | awk 'NF == 2 { $0 = $0 "No tag" }; { $2 = substr($2,0,70); print $1"\t"$2"\t"$3}' | column -t | run_rofi -kb-custom-1 "${new_bookmark_shortcut}" -kb-custom-2 "${list_tags_shortcut}" -kb-custom-3 "${delete_shortcut}" -kb-custom-4 "${edit_shorcut}" -mesg "Enter to select a bookmark. Alt+n to create a new one.
 Edit a bookmarks with Alt+e. Remove one with Alt+d. Search for tags with Alt+t.")
 	val=$?
+
+	id=$(echo $selection | awk -F ',' '{print $1}')
 	if [[ $val -eq 1 ]]; then
 		exit
 	elif [[ $val -eq 10 ]]; then
@@ -68,7 +70,7 @@ Edit a bookmarks with Alt+e. Remove one with Alt+d. Search for tags with Alt+t."
 	elif [[ $val -eq 13 ]]; then
 		edit $selection
 	else
-		openURL $selection
+		openURL $id
 	fi
 }
 
