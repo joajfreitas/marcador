@@ -3,7 +3,7 @@
 minimal bookmark manager
 
 ## Install
-	$ git clone git@github.com:joajfreitas/bookmarks.git
+	$ git clone https://github.com/joajfreitas/bookmarks.git
 	$ cd bookmarks
 	$ make install
 
