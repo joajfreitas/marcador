@@ -22,7 +22,7 @@ Rofi interface
 This project is heavily inspired by [buku](https://github.com/jarun/Buku)
 
 ## Screenshots
-![bookmarks screenshot](./screenshot.png)
+![bookmarks screenshot](./showcase.png)
 
 
 
