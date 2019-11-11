@@ -9,6 +9,6 @@ create table tags (
     
 create table bookmarks_tags (
 	identifier INTEGER PRIMARY KEY,
-	bookmark REFERENCES bookmarks(identifier), 
-	tag REFERENCES tags(identifier));
+	bookmark INTEGER REFERENCES bookmarks(identifier), 
+	tag INTEGER REFERENCES tags(identifier));
 

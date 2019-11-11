@@ -12,7 +12,7 @@ Usage:
     bookmarks tag-search <file> <tag>
     bookmarks tag-list <file>
     bookmarks update-metadata <file>
-    bookmarks html <file> <template> <output>
+    bookmarks html <file> <template>
     bookmarks open <file> <id>
 
 Options:
@@ -30,6 +30,8 @@ from bs4 import BeautifulSoup
 import jinja2
 import sqlite3
 
+from bottle import route, run, template, post, request, redirect
+
 from pprint import pprint
 
 def open_url_cmd(args, books):
@@ -39,7 +41,11 @@ def open_url_cmd(args, books):
 
     c.execute(f"select * from bookmarks where identifier='{id}'")
 
-    id, url, desc = c.fetchone()
+    id, url, desc, count = c.fetchone()
+
+    count+=1
+    c.execute(f"update bookmarks set count = {count} where identifier='{id}'")
+    conn.commit()
 
     from webbrowser import open
     open(url)
@@ -57,8 +63,8 @@ def add(args, books):
     for tag in tags:
         c.execute(f'insert into tags (tag) values ("{tag}")')
         tag_id = c.lastrowid
-        c.execute(f"""insert into bookmarks_tags (bookmark, tag) values
-                ("{book_id}", "{tag_id}")""")
+        c.execute(f"""insert into bookmarks_tags (bookmark, tag, count) values
+                ("{book_id}", "{tag_id}", 0)""")
 
     conn.commit()
 
@@ -73,8 +79,8 @@ def print_books(args, books):
     
     c.execute("select * from bookmarks")
     bookmarks = c.fetchall()
-
-    for id, url, desc in bookmarks:
+    
+    for id, url, desc, count in bookmarks:
         c.execute(f"""select distinct tags.tag from bookmarks join
         bookmarks_tags on bookmarks.identifier = bookmarks_tags.bookmark join
         tags on bookmarks_tags.tag = tags.identifier where
@@ -119,7 +125,7 @@ def get_url(args, books):
     c = books.cursor()
 
     c.execute(f"select * from bookmarks where identifier='{id}'")
-    id, url, desc = c.fetchone()
+    id, url, desc, count = c.fetchone()
     print(url)
 
 
@@ -173,10 +179,14 @@ def tag_search(args, books):
     
     c.execute(f"select identifier from tags where tag='{tag}'")
     id = c.fetchone()[0]
-    c.execute(f"select bt.bookmark from bookmarks_tags as bt where bt.tag = {id}")
+    c.execute(f"select bt.bookmark from bookmarks_tags as bt where bt.tag = '{id}'")
     bookmarks = c.fetchall()
-    for book in bookmarks:
-        print(book[0])
+
+    for _book in bookmarks:
+        book = _book[0]
+        c.execute(f"select * from bookmarks where identifier = {book}")
+        r = c.fetchone()
+        print(r[0], r[1], r[2])
 
     #c.execute("select * from bookmarks_tags where 
 #    for row in books:
@@ -218,15 +228,53 @@ def update_metadata(args, books):
 
 def html(args, books):
     template = args['<template>']
-    file = args['<file>']
-    output = args['<output>']
-
-    bookmarks = [(row['id'], row['url'], row['tags'], row.get('name') or row['url']) for row in books]
+    #file = args['<file>']
+    #output = args['<output>']
+    
+    c = books.cursor()
+    
     with open(template) as t:
         template = jinja2.Template(t.read())
 
-    with open(output, 'w') as file:
-        file.write(template.render(bookmarks=bookmarks))
+    c.execute("select url, description from bookmarks order by count desc");
+    bookmarks = c.fetchall()
+    
+    bookmarks = [(("/redirect?url="+url,desc) if desc else ("/redirect?url="+url, url))  for (url, desc) in bookmarks]
+
+    
+    @route('/')
+    def index():
+        c.execute("select url, description from bookmarks order by count desc");
+        bookmarks = c.fetchall()
+        
+        bookmarks = [(("/redirect?url="+url,desc) if desc else ("/redirect?url="+url, url))  for (url, desc) in bookmarks]
+
+        return template.render(bookmarks=bookmarks)
+
+    @route('/redirect')
+    def _redirect():
+        url = request.query.url
+
+        c.execute(f"select * from bookmarks where url='{url}'")
+        id, url, desc, count = c.fetchone()
+        count+=1
+
+        c.execute(f"update bookmarks set count = {count} where identifier='{id}'")
+        conn.commit()
+
+        print("redirected")
+        redirect(url)
+    
+    @post('/search')
+    def search():
+        nonlocal bookmarks
+        query = request.forms.query
+        c.execute(f"select url, description from bookmarks where description like '%{query}%' or url like '%{query}%' order by count desc") 
+        bookmarks = c.fetchall()
+        bookmarks = [("/redirect?url="+url,desc) if desc else ("/redirect?url="+url, url) for (url, desc) in bookmarks]
+        redirect("/")
+
+    run(host='localhost', port=9080)
 
 def do_nothing(args, books):
     return
@@ -244,7 +292,8 @@ def set_default_db(books_file):
     c.execute("""CREATE TABLE bookmarks (
         identifier INTEGER PRIMARY KEY, 
         url TEXT, 
-        description TEXT)
+        description TEXT,
+        count INTEGER)
         """
     )
 

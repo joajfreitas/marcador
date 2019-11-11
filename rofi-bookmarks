@@ -21,6 +21,7 @@ addBookmark () {
 }
 
 openURL () {
+	echo $1
 	number=$1
 	$BROWSER $(bookmarks url $DB $number)
 }
