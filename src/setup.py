@@ -1,9 +1,9 @@
 from setuptools import setup
 
 setup(
-    name='bookmarks',
+    name='marcador',
     version='0.1',
-    py_modules=['bookmarks'],
+    py_modules=['marcador','rofi_marcador'],
     install_requires=[
         'Click',
         'bottle',
@@ -13,6 +13,6 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        bookmarks=bookmarks:main
+        marcador=marcador:main
     ''',
 )

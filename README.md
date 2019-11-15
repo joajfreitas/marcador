@@ -1,22 +1,19 @@
-# Bookmarks
+# Marcador
 
 minimal bookmark manager
 
 ## Install
-	$ git clone git@github.com:joajfreitas/bookmarks.git
-	$ cd bookmarks
-	$ make install
-
-You may need root privileges for the last command
+	$ git clone git@github.com:joajfreitas/marcador.git
+	$ cd marcador
 
 ## Usage
 CLI interface
 
-	$ bookmarks -h
+	$ marcador -h
 
 Rofi interface
 
-	$ rofi-bookmarks
+	$ rofi-marcador
 
 ## Thanks
 This project is heavily inspired by [buku](https://github.com/jarun/Buku)
