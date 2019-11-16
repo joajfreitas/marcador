@@ -4,6 +4,7 @@ before_script:
   - pacman -Syy --noconfirm
   - pacman -Syu --noconfirm
   - pacman -S python --noconfirm
+  - pacman -S python-pip --noconfirm
   - pip install pytest
 test:
   script:
