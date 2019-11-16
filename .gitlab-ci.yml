@@ -1,6 +1,10 @@
 image: dock0/arch
 
+before_script:
+  - pacman -S python --noconfirm
+  - pip install pytest
 test:
   script:
+    - python setup.py install
     - cd marcador
     - pytest
