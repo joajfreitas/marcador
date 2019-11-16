@@ -1,6 +1,8 @@
 image: dock0/arch
 
 before_script:
+  - pacman -Syy --noconfirm
+  - pacman -Syu --noconfirm
   - pacman -S python --noconfirm
   - pip install pytest
 test:
