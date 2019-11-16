@@ -1,5 +1,5 @@
-from rofi import Rofi
-from marcador_lib import Database, bookmark_to_str
+from .rofi import Rofi
+from .marcador_lib import Database, bookmark_to_str
 import clipboard
 
 

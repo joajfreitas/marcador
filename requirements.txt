@@ -1,8 +1,0 @@
-docopt
-bottle
-jinja2
-requests
-beautifulsoup4
-click
-python-rofi
-clipboard

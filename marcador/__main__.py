@@ -13,8 +13,8 @@ from bottle import route, run, template, post, request, redirect
 
 from pprint import pprint
 
-from rofi_marcador import RofiMarcador
-from marcador_lib import Database
+from .marcador_lib import Database
+from .rofi_marcador import RofiMarcador
 
 
 @click.command(name='open')
