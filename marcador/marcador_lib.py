@@ -1,6 +1,7 @@
 import os
 import sqlite3
 
+
 class Database():
     def __init__(self, filename):
         self.filename = filename
@@ -88,14 +89,18 @@ class Database():
         self.conn.commit()
 
     def get_url(self, id):
+        if id == 0:
+            return None
+
         self.cursor.execute(f"select * from bookmarks where identifier='{id}'")
         _, url, _, _ = self.cursor.fetchone()
         return url
 
     def get_bookmark(self, id):
         self.cursor.execute(f"select * from bookmarks where identifier='{id}'")
-        id, url, desc = self.cursor.fetchone()
-        return id, url, desc
+
+        id, url, desc, count = self.cursor.fetchone()
+        return id, url, desc, count
 
     #def edit_bookmark(self, id):
     #    row = self.conn[id]
@@ -131,15 +136,19 @@ class Database():
 
     def bookmark_tag_search(self, tag):
         self.cursor.execute(f"select identifier from tags where tag='{tag}'")
-        id = self.cursor.fetchone()[0]
+        r = self.cursor.fetchone()
+        if r == None:
+            return []
+        id = r[0]
+
         self.cursor.execute(f"select bt.bookmark from bookmarks_tags as bt where bt.tag = '{id}'")
         bookmarks = self.cursor.fetchall()
 
         for _book in bookmarks:
             book = _book[0]
             self.cursor.execute(f"select * from bookmarks where identifier = {book}")
-            r = self.cursor.fetchone()
-            yield (r[0], r[1], r[2])
+            id, url, desc, count = self.cursor.fetchone()
+            yield id, url, desc, count
 
     def bookmark_tag_list(self):
         self.cursor.execute("select tag from tags")

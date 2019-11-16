@@ -1,0 +1,6 @@
+image: dock0/arch
+
+test:
+  script:
+    - cd marcador
+    - pytest
