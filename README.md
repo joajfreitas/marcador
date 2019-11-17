@@ -1,4 +1,4 @@
-![](https://gitlab.com/%{project_path}/badges/%{default_branch}/pipeline.svg)
+![](https://gitlab.com/joajfreitas/bookmarks/badges/master/pipeline.svg)
 
 # Marcador
 
