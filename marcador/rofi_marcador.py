@@ -56,7 +56,7 @@ class RofiMarcador():
     
     def launch(self):
         self.bookmarks = self.disp_bookmarks()
-        index, key = self.rofi.select("What is your name", 
+        index, key = self.rofi.select("> ", 
                           self.bookmarks, 
                           key1=('Alt+n', "Add new bookmark"), 
                           key2=('Alt+d', "Delete the selected bookmark"),
