@@ -9,6 +9,7 @@ minimal bookmark manager
 
 ## Usage
 CLI interface
+
 	$ marcador --help
 
 	Usage: marcador [OPTIONS] COMMAND [ARGS]...
@@ -28,7 +29,7 @@ CLI interface
 	  tag-search
 	  url
 
-Rofi interface
+### Rofi interface
 
 	$ marcador rofi <bookmark file>
 
