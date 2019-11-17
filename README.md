@@ -1,3 +1,5 @@
+![](https://gitlab.com/%{project_path}/badges/%{default_branch}/pipeline.svg)
+
 # Marcador
 
 minimal bookmark manager
