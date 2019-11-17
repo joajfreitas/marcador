@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<title>memepage</title>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+		<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<div id="wrapper">
+		<div id="clock"></div>
+
+		<form class="form1" action="/search" method="post">
+			<input type="search" name="query" alt="search" placeholder="Search here" autofocus>
+		</form>
+
+		<div id="books">
+			<ul>
+				{% for (url, desc) in bookmarks %}
+					<li><a href="{{ url }}">{{ desc }}</a></li>
+				{% endfor %}
+			</ul>
+		</div>
+	</div>
+	<script src="script.js"></script>
+</body>
+</html>
