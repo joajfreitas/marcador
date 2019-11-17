@@ -8,7 +8,7 @@ setup(
     author_email="joaj.freitas@gmail.com",
     license="GPLv3",
     url='https://github.com/joajfreitas/marcador',
-    download_url = 'https://github.com/joajfreitas/marcador/archive/v0.1.tar.gz'
+    download_url = 'https://github.com/joajfreitas/marcador/archive/v0.1.tar.gz',
     packages = find_packages(),
     entry_points={
             'console_scripts': [
