@@ -39,7 +39,9 @@ class RofiMarcador():
         return
 
     def edit(self, index):
-        print("edit")
+        i = self.bookmarks[index][0]
+        self.db.edit_bookmark(i)
+        self.launch()
         return
 
     def dispatch(self, index, key):

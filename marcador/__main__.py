@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import click
-from subprocess import call
 import json, os
 
 import requests
@@ -13,7 +12,7 @@ from bottle import route, run, template, post, request, redirect
 
 from pprint import pprint
 
-from .marcador_lib import Database
+from .marcador_lib import Database, bookmark_to_str
 from .rofi_marcador import RofiMarcador
 
 
@@ -39,13 +38,8 @@ def print_bookmarks(filename):
     bookmarks = db.get_bookmarks()
     
     output = ""
-    for id, url, tags in get_bookmarks(c):
-        output += f"{id}, {url} "
-
-        for tag in tags:
-            output += f"{tag},"
-
-        output = output[:-1] + '\n'
+    for bookmark in bookmarks:
+        output += bookmark_to_str(bookmark)
     
     print(output[:-1])
 
@@ -77,7 +71,8 @@ def get_bookmark(filename, id):
 @click.argument('filename')
 @click.argument('id')
 def edit(filename, id):
-    print("not yet implemented")
+    db = Database(filename)
+    db.edit_bookmark(id)
 
 @click.command(name='tag-search')
 @click.argument('filename')

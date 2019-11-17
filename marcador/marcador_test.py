@@ -80,5 +80,20 @@ def test_bookmark_tag_search_empty(database):
 
 def test_bookmark_tag_search(database):
     bookmarks = database.bookmark_tag_search("social media")
-    assert(len(list(bookmarks)) == 0)
+    assert(len(list(bookmarks)) == 3)
+
+def test_get_bookmark_tags(database):
+    assert(len(database.get_bookmark_tags(1)) == 2)
+
+def test_get_tag_id(database):
+    assert(database.get_tag_id("personal") == 2)
+
+def test_set_bookmark(database):
+    database.set_bookmark(1, "example.com", ["example", "test"])
+    id, url, desc, count = database.get_bookmark(1)
+    tags = database.get_bookmark_tags(1)
+    assert(url == "example.com")
+    assert(tags[0][0] == "example")
+    assert(tags[1][0] == "test")
+
 
