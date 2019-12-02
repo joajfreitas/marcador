@@ -37,7 +37,6 @@ CLI interface
 This project is heavily inspired by [buku](https://github.com/jarun/Buku)
 
 ## Screenshots
-![bookmarks screenshot](./showcase_pretty.png)
-
+![bookmarks screenshot](https://raw.githubusercontent.com/joajfreitas/marcador/master/showcase_pretty.png)
 
 
