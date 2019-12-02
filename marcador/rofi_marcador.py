@@ -16,7 +16,7 @@ class RofiMarcador():
         return [bookmark_to_str(bookmark) for bookmark in self.db.get_bookmarks()]
 
     def select(self, index):
-        self.db.open_bookmark(self.bookmarks[index][0])
+        self.db.open_bookmark(self.bookmarks[index].split(',')[0])
 
     def add(self):
         text = clipboard.paste()
@@ -56,6 +56,7 @@ class RofiMarcador():
     
     def launch(self):
         self.bookmarks = self.disp_bookmarks()
+        print(self.bookmarks)
         index, key = self.rofi.select("> ", 
                           self.bookmarks, 
                           key1=('Alt+n', "Add new bookmark"), 
