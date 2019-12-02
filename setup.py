@@ -11,7 +11,7 @@ setup(
     description='Simple rofi based bookmark manager',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    version='0.4',
+    version='0.5',
     author="João Freitas",
     author_email="joaj.freitas@gmail.com",
     license="GPLv3",
