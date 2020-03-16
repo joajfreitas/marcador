@@ -3,7 +3,7 @@ import sqlite3
 from subprocess import call
 
 
-class Database():
+class Database:
     def __init__(self, filename):
         self.filename = filename
         self.conn = self.open_database(self.filename)
@@ -11,25 +11,30 @@ class Database():
 
     def open_db(self, filename):
         return sqlite3.connect(filename)
-    
+
     def set_default_db(self, filename):
         conn = self.open_db(filename)
         c = conn.cursor()
 
-        c.execute("""CREATE TABLE bookmarks (
+        c.execute(
+            """CREATE TABLE bookmarks (
             identifier INTEGER PRIMARY KEY, 
             url TEXT, 
             description TEXT,
-            count INTEGER)
+            count INTEGER,
+            thumbnail TEXT,
+            score REAL)
             """
         )
 
-        c.execute("""CREATE TABLE tags (
+        c.execute(
+            """CREATE TABLE tags (
             identifier INTEGER PRIMARY KEY, 
             tag TEXT)
             """
         )
-        c.execute("""CREATE TABLE bookmarks_tags (
+        c.execute(
+            """CREATE TABLE bookmarks_tags (
             bookmark REFERENCES bookmarks(identifier), 
             tag REFERENCES tags(identifier))
             """
@@ -44,40 +49,46 @@ class Database():
 
         return self.open_db(filename)
 
-    def get_bookmarks(self):
-        self.cursor.execute("select * from bookmarks")
+    def get_bookmarks(self, sorted=False):
+        self.cursor.execute(
+            """select identifier, url, description, thumbnail, count from bookmarks""" + (" order by score DESC" if sorted else "")
+        )
+
         bookmarks = self.cursor.fetchall()
 
-        for id, url, desc, count in bookmarks:
+        for id, url, desc, thumbnail, count in bookmarks:
             tags = self.get_bookmark_tags(id)
-            tags = [tag for tag,id in tags]
-            
-            yield id, url, tags
+            tags = [tag for tag, id in tags]
+
+            yield id, url, thumbnail, tags
 
     def open_bookmark(self, id):
-        self.cursor.execute(f"select * from bookmarks where identifier='{id}'")
+        self.cursor.execute(f"select url, count from bookmarks where identifier='{id}'")
 
-        id, url, desc, count = self.cursor.fetchone()
+        url, count = self.cursor.fetchone()
 
-        count+=1
-        self.cursor.execute(f"update bookmarks set count = {count} where identifier='{id}'")
-        self.conn.commit()
+        self.hit_url(url)
 
         import webbrowser
+
         webbrowser.open(url)
 
     def add_bookmark(self, url, tags):
-        self.cursor.execute(f'insert into bookmarks (url,count) values ("{url}",0)')
+        self.cursor.execute(f'insert into bookmarks (url,count,score) values ("{url}",0,1)')
         book_id = self.cursor.lastrowid
         for tag in tags:
             self.cursor.execute(f'insert into tags (tag) values ("{tag}")')
             tag_id = self.cursor.lastrowid
-            self.cursor.execute(f"insert into bookmarks_tags (bookmark, tag) values ({book_id}, {tag_id})")
+            self.cursor.execute(
+                f"insert into bookmarks_tags (bookmark, tag) values ({book_id}, {tag_id})"
+            )
 
         self.conn.commit()
 
     def rm_bookmark(self, id):
-        self.cursor.execute(f"delete from bookmarks_tags as bt where bt.bookmark = {id}")
+        self.cursor.execute(
+            f"delete from bookmarks_tags as bt where bt.bookmark = {id}"
+        )
         self.cursor.execute(f"delete from bookmarks where identifier = {id}")
         self.conn.commit()
 
@@ -85,16 +96,19 @@ class Database():
         if id == 0:
             return None
 
-        self.cursor.execute(f"select * from bookmarks where identifier={id}")
-        _, url, _, _ = self.cursor.fetchone()
+        self.cursor.execute(f"select url from bookmarks where identifier={id}")
+        url = self.cursor.fetchone()
         return url
 
     def get_bookmark(self, id):
-        self.cursor.execute(f"select * from bookmarks where identifier={id}")
+        self.cursor.execute(
+            f"""select identifier, url, description, thumbnail, count
+                from bookmarks where identifier={id}"""
+        )
 
-        id, url, desc, count = self.cursor.fetchone()
-        return id, url, desc, count
-    
+        id, url, desc, thumbnail, count = self.cursor.fetchone()
+        return id, url, desc, thumbnail, count
+
     def set_bookmark(self, id, url, tags):
         self.cursor.execute(f"update bookmarks set url='{url}' where identifier={id}")
 
@@ -105,25 +119,30 @@ class Database():
 
         self.cursor.execute(f"delete from bookmarks_tags as bt where bt.bookmark={id}")
 
-        print(f"delete from bookmarks_tags as bt where bt.bookmark={id}")
-
         for tag in tags:
-            print(tag)
             tag_id = self.get_tag_id(tag)
-            self.cursor.execute(f"insert into bookmarks_tags as bt values ({id},{tag_id})")
+            self.cursor.execute(
+                f"insert into bookmarks_tags as bt values ({id},{tag_id})"
+            )
 
         self.conn.commit()
 
+    def set_thumbnail(self, id, thumbnail):
+        self.cursor.execute(
+            f"update bookmarks set thumbnail='{thumbnail}' where identifier={id}"
+        )
+        self.conn.commit()
+
     def edit_bookmark(self, id):
-        id, url, desc, count = self.get_bookmark(id)
+        id, url, desc, thumbnail, count = self.get_bookmark(id)
         tags = self.get_bookmark_tags(id)
 
         tmp_file = "/tmp/bookmarks.tmp"
         with open(tmp_file, "w") as tmp:
-            tmp.write(url+'\n')
+            tmp.write(url + "\n")
 
-            for tag,tag_id in tags:
-                tmp.write(tag+'\n')
+            for tag, tag_id in tags:
+                tmp.write(tag + "\n")
 
         term = os.path.expandvars("$TERM")
         editor = os.path.expandvars("$EDITOR")
@@ -132,20 +151,19 @@ class Database():
         with open(tmp_file, "r") as tmp:
             lines = tmp.readlines()
 
-        lines = [l.strip('\n') for l in lines if l != '']
+        lines = [l.strip("\n") for l in lines if l != ""]
 
         url = lines[0]
         tags = [tag for tag in lines[1:]]
-        print(tags)
 
         self.set_bookmark(id, url, tags)
 
     def get_bookmark_tags(self, id):
-        self.cursor.execute(f"select tags.tag, tags.identifier from bookmarks_tags as bt, tags where bt.bookmark={id} and bt.tag = tags.identifier")
+        self.cursor.execute(
+            f"""select tags.tag, tags.identifier from
+            bookmarks_tags as bt, tags where bt.bookmark={id} and bt.tag = tags.identifier"""
+        )
         return list(self.cursor.fetchall())
-
-
-
 
     def bookmark_tag_search(self, tag):
         self.cursor.execute(f"select identifier from tags where tag='{tag}'")
@@ -154,12 +172,17 @@ class Database():
             return []
         id = r[0]
 
-        self.cursor.execute(f"select bt.bookmark from bookmarks_tags as bt where bt.tag = {id}")
+        self.cursor.execute(
+            f"select bt.bookmark from bookmarks_tags as bt where bt.tag = {id}"
+        )
         bookmarks = self.cursor.fetchall()
 
         for _book in bookmarks:
             book = _book[0]
-            self.cursor.execute(f"select * from bookmarks where identifier = {book}")
+            self.cursor.execute(
+                    f"""select identifier, url, description, count
+                    from bookmarks where identifier = {book}""")
+
             id, url, desc, count = self.cursor.fetchone()
             yield id, url, desc, count
 
@@ -175,12 +198,25 @@ class Database():
         r = self.cursor.fetchone()
         return None if r == None else r[0]
 
+    def hit_url(self, url):
+        self.cursor.execute(f"select identifier, count, score from bookmarks where url='{url}'")
+        id, count, score = self.cursor.fetchone()
+        count = int(count)
+        count += 1
+        score += 1
+
+        self.cursor.execute(f"update bookmarks set score = score*0.95 where identifier<>'{id}'")
+        self.cursor.execute(
+            f"update bookmarks set count = {count}, score = {score} where identifier='{id}'")
+
+        self.conn.commit()
+
 
 def bookmark_to_str(bookmark):
-    id, url, tags = bookmark
+    id, url, thumbnail, tags = bookmark
     output = f"{id}, {url} "
     for tag in tags:
         output += f"{tag},"
 
-    output = output[:-1] + '\n'
+    output = output[:-1] + "\n"
     return output

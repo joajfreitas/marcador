@@ -5,15 +5,15 @@ import clipboard
 
 class Bookmark():
     def __init__(self):
-        return 
+        return
 
 class RofiMarcador():
     def __init__(self, filename):
         self.rofi = Rofi()
         self.db = Database(filename)
-    
+
     def disp_bookmarks(self):
-        return [bookmark_to_str(bookmark) for bookmark in self.db.get_bookmarks()]
+        return [bookmark_to_str(bookmark) for bookmark in self.db.get_bookmarks(sorted=True)]
 
     def select(self, index):
         self.db.open_bookmark(self.bookmarks[index].split(',')[0])
@@ -31,7 +31,7 @@ class RofiMarcador():
         tags = tags.split(",")
         self.db.add_bookmark(url, tags)
         return
-    
+
     def delete(self, index):
         i = self.bookmarks[index][0]
         self.db.rm_bookmark(i)
@@ -39,7 +39,7 @@ class RofiMarcador():
         return
 
     def edit(self, index):
-        i = self.bookmarks[index][0]
+        i = self.bookmarks[index].split(',')[0]
         self.db.edit_bookmark(i)
         self.launch()
         return
@@ -53,13 +53,13 @@ class RofiMarcador():
             return self.delete(index)
         elif key == 3:
             return self.edit(index)
-    
+
     def launch(self):
         self.bookmarks = self.disp_bookmarks()
-        print(self.bookmarks)
-        index, key = self.rofi.select("> ", 
+        ret = self.rofi.select("> ", 
                           self.bookmarks, 
                           key1=('Alt+n', "Add new bookmark"), 
                           key2=('Alt+d', "Delete the selected bookmark"),
                           key3=('Alt+e', "Edit the selected bookmark"))
+        index, key = ret
         self.dispatch(index, key)
