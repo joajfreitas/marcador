@@ -5,27 +5,18 @@ from pprint import pprint
 
 import click
 import jinja2
-from appdirs import user_data_dir
 from selenium import webdriver
 
 from marcador.version import version
-from marcador.marcador_lib import (Bookmark, BookmarkTag, Database, Tag,
-                                   bookmark_to_str, get_session)
+from marcador.marcador_lib import (Bookmark, BookmarkTag, Tag, get_session, get_db_path)
 from marcador.rofi_marcador import RofiMarcador
+from marcador.server import server
 
 
 from flask import Flask, jsonify, Response, send_from_directory, render_template, request, redirect
 from flask_cors import CORS
 
 
-def get_user_data_dir():
-    appauthor = "joajfreitas"
-    appname = "marcador"
-
-    return user_data_dir(appname, appauthor)
-
-def get_db_path():
-    return Path(get_user_data_dir()) / Path("marcador.sqlite")
 
 @click.command(name='open')
 @click.argument('url')
@@ -121,12 +112,12 @@ def get_bookmark(id):
     session = get_session(get_db_path())
     print(session.query(Bookmark).filter(Bookmark.identifier == id).one())
 
-@click.command()
-@click.argument('filename')
-@click.argument('id')
-def edit(filename, id):
-    db = Database(filename)
-    db.edit_bookmark(id)
+#@click.command()
+#@click.argument('filename')
+#@click.argument('id')
+#def edit(filename, id):
+#    db = Database(filename)
+#    db.edit_bookmark(id)
 
 @click.command(name='html')
 @click.argument('template')
@@ -237,6 +228,9 @@ def rofi_launch():
     rm.launch()
 
 
+
+
+
 @click.group(invoke_without_command=True)
 @click.version_option(version)
 def main():
@@ -261,10 +255,11 @@ main.add_command(add)
 main.add_command(delete)
 main.add_command(get_url)
 main.add_command(get_bookmark)
-main.add_command(edit)
+#main.add_command(edit)
 main.add_command(html)
 main.add_command(gen_thumbnails)
 main.add_command(rofi_launch)
+main.add_command(server)
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,7 @@
+from webbrowser import open
 from .rofi import Rofi
-from .marcador_lib import Database, bookmark_to_str, Bookmark, Tag, BookmarkTag
+from .marcador_lib import Bookmark, Tag, BookmarkTag
+from .proxy import RemoteProxy
 import clipboard
 
 
@@ -8,14 +10,13 @@ class RofiMarcador():
         self.rofi = Rofi()
         self.session = session
 
-    def disp_bookmarks(self):
-        return [bookmark.url for bookmark in self.session.query(Bookmark).order_by(Bookmark.score.desc()).all()]
+        self.proxy = RemoteProxy(("127.0.0.1", 6003))
+
+    def list(self):
+        return [bookmark.url for bookmark in self.proxy.list()]
 
     def select(self, index):
-        from webbrowser import open
-
-        bookmarks = self.session.query(Bookmark).order_by(Bookmark.score.desc()).all()
-
+        bookmarks = list(self.proxy.list())
         open(bookmarks[index].url)
 
     def add(self):
@@ -30,26 +31,16 @@ class RofiMarcador():
 
         tags = tags.split(",")
 
-        bookmark = Bookmark(url=url)
-        self.session.add(bookmark)
+        self.proxy.add(url)
 
         for tag in tags:
-            tag = Tag(tag=tag)
-            self.session.add(tag)
+            self.proxy.add_tag(url, tag)
 
-            bookmark_tag = BookmarkTag(url=url, tag=tag.tag)
-            self.session.add(bookmark_tag)
-        
-        self.session.commit()
         return
 
     def delete(self, index):
-        bookmarks = self.session.query(Bookmark).all()
-        bookmark = bookmarks[index]
-
-        self.session.query(Bookmark).filter(Bookmark.url == bookmark.url).delete()
-        self.session.commit()
-        return
+        bookmark = list(self.proxy.list())[index]
+        self.proxy.delete(bookmark.url)
 
     def edit(self, index):
         i = self.bookmarks[index].split(',')[0]
@@ -58,7 +49,7 @@ class RofiMarcador():
         return
 
     def dispatch(self, index, key):
-        if key == 0: 
+        if key == 0:
             return self.select(index)
         elif key == 1:
             return self.add()
@@ -68,7 +59,7 @@ class RofiMarcador():
             return self.edit(index)
 
     def launch(self):
-        self.bookmarks = self.disp_bookmarks()
+        self.bookmarks = self.list()
         ret = self.rofi.select("> ", 
                           self.bookmarks, 
                           key1=('Alt+n', "Add new bookmark"), 
