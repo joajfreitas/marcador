@@ -1,4 +1,4 @@
-image: dock0/arch
+image: archlinux:latest
 
 before_script:
   - pacman -Syy --noconfirm
