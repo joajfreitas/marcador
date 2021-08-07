@@ -1,7 +1,55 @@
 import os
 import sqlite3
 from subprocess import call
+from pathlib import Path
 
+from sqlalchemy import Column, ForeignKey, Integer, Float, String, func, create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.session import Session
+
+Base = declarative_base()
+
+class Bookmark(Base):
+    __tablename__ = 'bookmark'
+    #identifier = Column(Integer, primary_key=True)
+    url = Column(String, primary_key=True)
+    description = Column(String)
+    count = Column(Integer)
+    thumbnail = Column(String)
+    score = Column(Float)
+
+    def __repr__(self):
+        return f"Bookmark {{{self.url=}, {self.thumbnail=}}}"
+
+class Tag(Base):
+    __tablename__ = 'tag'
+
+    #identifier = Column(Integer, primary_key = True)
+    tag = Column(String, primary_key=True)
+
+    def __repr__(self):
+        return f"Tag {{{self.tag=}}}"
+
+class BookmarkTag(Base):
+    __tablename__ = 'bookmark_tag'
+
+    url = Column(String, ForeignKey('bookmark.url'), primary_key=True)
+    tag = Column(String, ForeignKey('tag.tag'), primary_key=True)
+
+    def __repr__(self):
+        return f"BookmarkTag {{bookmark={self.bookmark},tag={self.tag}}}"
+
+
+def get_session(db_path: Path) -> Session:
+    engine = create_engine("sqlite:///"+str(db_path))
+    Base.metadata.create_all(engine)
+    Base.metadata.bind = engine
+    DBSession = sessionmaker(bind=engine)
+    session: Session = DBSession()
+
+    return session
 
 class Database:
     def __init__(self, filename):

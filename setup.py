@@ -19,20 +19,17 @@ setup(
     author_email="joaj.freitas@gmail.com",
     license="GPLv3",
     url='https://github.com/joajfreitas/marcador',
-    download_url = 'https://github.com/joajfreitas/marcador/archive/v0.2.tar.gz',
+    #download_url = 'https://github.com/joajfreitas/marcador/archive/v0.2.tar.gz',
     packages = find_packages(),
-    entry_points={
-            'console_scripts': [
-                'marcador = marcador.__main__:main',
-            ],
-        },
+    entry_points={'console_scripts': ["marcador = marcador.__main__:main",],},
     install_requires = [
         'clipboard',
         'python-rofi',
         'click',
         'jinja2',
         'beautifulsoup4',
-        'request',
-        'bottle'
+        'requests',
+        'bottle',
+        'selenium',
     ]
 )

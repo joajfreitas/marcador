@@ -1,22 +1,22 @@
 from .rofi import Rofi
-from .marcador_lib import Database, bookmark_to_str
+from .marcador_lib import Database, bookmark_to_str, Bookmark, Tag, BookmarkTag
 import clipboard
 
 
-class Bookmark():
-    def __init__(self):
-        return
-
 class RofiMarcador():
-    def __init__(self, filename):
+    def __init__(self, session):
         self.rofi = Rofi()
-        self.db = Database(filename)
+        self.session = session
 
     def disp_bookmarks(self):
-        return [bookmark_to_str(bookmark) for bookmark in self.db.get_bookmarks(sorted=True)]
+        return [bookmark.url for bookmark in self.session.query(Bookmark).order_by(Bookmark.score.desc()).all()]
 
     def select(self, index):
-        self.db.open_bookmark(self.bookmarks[index].split(',')[0])
+        from webbrowser import open
+
+        bookmarks = self.session.query(Bookmark).order_by(Bookmark.score.desc()).all()
+
+        open(bookmarks[index].url)
 
     def add(self):
         text = clipboard.paste()
@@ -29,13 +29,26 @@ class RofiMarcador():
             return
 
         tags = tags.split(",")
-        self.db.add_bookmark(url, tags)
+
+        bookmark = Bookmark(url=url)
+        self.session.add(bookmark)
+
+        for tag in tags:
+            tag = Tag(tag=tag)
+            self.session.add(tag)
+
+            bookmark_tag = BookmarkTag(url=url, tag=tag.tag)
+            self.session.add(bookmark_tag)
+        
+        self.session.commit()
         return
 
     def delete(self, index):
-        i = self.bookmarks[index][0]
-        self.db.rm_bookmark(i)
-        self.launch()
+        bookmarks = self.session.query(Bookmark).all()
+        bookmark = bookmarks[index]
+
+        self.session.query(Bookmark).filter(Bookmark.url == bookmark.url).delete()
+        self.session.commit()
         return
 
     def edit(self, index):

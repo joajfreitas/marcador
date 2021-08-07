@@ -21,7 +21,7 @@ from flask_cors import CORS
 def get_user_data_dir():
     appauthor = "joajfreitas"
     appname = "marcador"
-
+    
     return user_data_dir(appname, appauthor)
 
 def get_db_path():
@@ -42,12 +42,12 @@ def open_bookmark_cmd(url):
 @click.argument('tags', nargs=-1)
 def add(url, tags):
     session = get_session(get_db_path())
-
-    bookmark = Bookmark(
-            url = url,
-            description = "",
-            count = 0,
-            thumbnail = "",
+    
+    bookmark = Bookmark( 
+            url = url, 
+            description = "", 
+            count = 0, 
+            thumbnail = "", 
             score = 0)
 
     session.add(bookmark)
@@ -58,14 +58,14 @@ def add(url, tags):
 
         bookmark_tag = BookmarkTag(url=url, tag=tag.tag)
         session.add(bookmark_tag)
-
+    
     session.commit()
 
 
 @click.command(name='bookmarks')
 def print_bookmarks():
     session = get_session(get_db_path())
-
+    
     bookmarks = session.query(Bookmark).all()
     pprint(bookmarks)
 
@@ -73,7 +73,7 @@ def print_bookmarks():
 @click.argument('url')
 def print_bookmark(url):
     session = get_session(get_db_path())
-
+    
     bookmark = session.query(Bookmark).filter(Bookmark.url == url).one()
 
     pprint(bookmark)
@@ -83,7 +83,7 @@ def print_bookmark(url):
 @click.command(name='tags')
 def print_tags():
     session = get_session(get_db_path())
-
+    
     tags = session.query(Tag).all()
     pprint(tags)
 
@@ -92,10 +92,10 @@ def print_tags():
 @click.argument('tag')
 def print_tag(tag):
     session = get_session(get_db_path())
-
+    
     tag = session.query(Tag).filter(Tag.tag == tag).one()
     pprint(tag)
-
+    
     pprint([bt.url for bt in session.query(BookmarkTag).filter(BookmarkTag.tag == tag.tag).all()])
 
 @click.command()
@@ -148,12 +148,12 @@ def html(template):
 
         return template.render(bookmarks=bookmarks)
 
-
+    
     @app.route('/bookmarks')
     def bookmarks():
         session = get_session(get_db_path())
         bookmarks = session.query(Bookmark).order_by(Bookmark.score.desc()).all()
-
+        
         bookmarks_list = []
         for bookmark in bookmarks:
             bookmark = {
@@ -227,7 +227,7 @@ def gen_thumbnails():
         except Exception as e:
             print("Error: " + str(e))
             continue
-
+    
     session.commit()
 
 @click.command(name="rofi")
@@ -239,7 +239,7 @@ def rofi_launch():
 
 @click.group(invoke_without_command=True)
 @click.version_option(version)
-def main():
+def cli():
     db_path = get_db_path()
     if not db_path.is_file():
         print(db_path)
@@ -248,21 +248,21 @@ def main():
 
     return
 
+   
+cli.add_command(print_bookmarks)
+cli.add_command(print_bookmark)
+cli.add_command(print_tags)
+cli.add_command(print_tag)
 
-main.add_command(print_bookmarks)
-main.add_command(print_bookmark)
-main.add_command(print_tags)
-main.add_command(print_tag)
-
-main.add_command(open_bookmark_cmd)
-main.add_command(add)
-main.add_command(delete)
-main.add_command(get_url)
-main.add_command(get_bookmark)
-main.add_command(edit)
-main.add_command(html)
-main.add_command(gen_thumbnails)
-main.add_command(rofi_launch)
+cli.add_command(open_bookmark_cmd)
+cli.add_command(add)
+cli.add_command(delete)
+cli.add_command(get_url)
+#cli.add_command(get_bookmark)
+cli.add_command(edit)
+cli.add_command(html)
+cli.add_command(gen_thumbnails)
+cli.add_command(rofi_launch)
 
 if __name__ == "__main__":
-    main()
+    cli()
