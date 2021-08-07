@@ -11,3 +11,15 @@ test:
     - python setup.py install
     - cd marcador
     - pytest
+
+
+release:
+  image: joajfreitas/arch-python
+  stage: deploy
+  only:
+    - release
+
+  script:
+    - python setup.py sdist
+    - pip install twine
+    - twine upload -u joajfreitas -p $PYPI_PASSWORD dist/* 

@@ -8,7 +8,7 @@ import jinja2
 from appdirs import user_data_dir
 from selenium import webdriver
 
-from marcador import version
+from marcador.version import version
 from marcador.marcador_lib import (Bookmark, BookmarkTag, Database, Tag,
                                    bookmark_to_str, get_session)
 from marcador.rofi_marcador import RofiMarcador
@@ -245,6 +245,8 @@ def main():
         print(db_path)
         db_path.parent.mkdir(exist_ok=True)
         db_path.touch()
+
+    print("marcador.\nVersion:", version, "\nFor usage see marcador --help")
 
     return
 

@@ -1,1 +1,1 @@
-version = '0.14'
+from .version import version
