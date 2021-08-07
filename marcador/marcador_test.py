@@ -62,13 +62,13 @@ def test_rm_bookmark_wrong_index(database):
     assert(len(list(bookmarks)) == 6)
 
 def test_get_url(database):
-    assert(database.get_url(1)=="reddit.com")
+    assert(database.get_url(1)[0]=="reddit.com")
 
 def test_get_url_0_index(database):
     assert(database.get_url(0)==None)
 
 def test_get_bookmark(database):
-    id, url, desc, count = database.get_bookmark(1)
+    id, url, desc, thumbnail, count = database.get_bookmark(1)
     assert(id==1)
     assert(url=="reddit.com")
     assert(desc==None)
@@ -90,7 +90,7 @@ def test_get_tag_id(database):
 
 def test_set_bookmark(database):
     database.set_bookmark(1, "example.com", ["example", "test"])
-    id, url, desc, count = database.get_bookmark(1)
+    id, url, desc, thumbnail, count = database.get_bookmark(1)
     tags = database.get_bookmark_tags(1)
     assert(url == "example.com")
     assert(tags[0][0] == "example")
