@@ -30,9 +30,9 @@ def marcador_delete(session, args):
     session.commit()
 
 @click.command()
-@click.option('hostname', default='127.0.0.1')
-@click.option('port', type=int, default=6003)
-def server():
+@click.option('--hostname', default='127.0.0.1')
+@click.option('--port', type=int, default=6003)
+def server(hostname, port):
     session = get_session(get_db_path())
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

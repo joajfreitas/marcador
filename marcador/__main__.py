@@ -3,17 +3,19 @@
 from pprint import pprint
 
 import click
+import sys
 
-from marcador.version import marcador_version
+from marcador.version import version as marcador_version
 from marcador.rofi_marcador import RofiMarcador
 from marcador.server import server
 from marcador.proxy import RemoteProxy, LocalProxy
+from marcador.lib import get_session, get_db_path
 
 def get_proxy(hostname, port):
     if hostname is not None and port is not None:
         return RemoteProxy((hostname, port))
     else:
-        return LocalProxy()
+        return LocalProxy(get_session(get_db_path()))
 
 
 @click.command()
@@ -21,7 +23,7 @@ def get_proxy(hostname, port):
 @click.argument("tags")
 @click.option('--hostname', default=None, help="hostname of the marcador server")
 @click.option('--port', default=None, type=int, help="post of the marcador server")
-def add(url, tags):
+def add(url, tags, hostname, port):
     proxy = get_proxy(hostname, port)
     proxy.add(url)
 
@@ -33,7 +35,7 @@ def add(url, tags):
 @click.command(name='bookmarks')
 @click.option('--hostname', default=None, help="hostname of the marcador server")
 @click.option('--port', default=None, type=int, help="post of the marcador server")
-def print_bookmarks():
+def print_bookmarks(hostname, port):
     proxy = get_proxy(hostname, port)
     pprint(proxy.list())
 
@@ -43,7 +45,7 @@ def print_bookmarks():
 @click.argument('url')
 @click.option('--hostname', default=None, help="hostname of the marcador server")
 @click.option('--port', default=None, type=int, help="post of the marcador server")
-def delete(url):
+def delete(url, hostname, port):
     proxy = get_proxy(hostname, port)
     proxy.delete(url)
 
@@ -61,14 +63,8 @@ def rofi_launch(hostname=None, port=None):
 @click.group(invoke_without_command=True)
 @click.option("--version", is_flag=True, default=False)
 def main(version):
-    db_path = get_db_path()
-    if not db_path.is_file():
-        print(db_path)
-        db_path.parent.mkdir(exist_ok=True)
-        db_path.touch()
-
     if len(sys.argv)  == 1:
-        print("marcador.\nVersion:", version, "\nFor usage see marcador --help")
+        print("marcador.\nVersion:", marcador_version, "\nFor usage see marcador --help")
     if version:
         click.echo(marcador_version)
 

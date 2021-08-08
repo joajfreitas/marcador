@@ -1,4 +1,4 @@
-from marcador.lib import get_session, get_db_path, Bookmark, Tag, BookmarkTag
+from marcador.lib import  Bookmark, Tag, BookmarkTag
 import socket
 import json
 
@@ -27,15 +27,15 @@ class RemoteProxy():
 
 
 class LocalProxy():
-    def __init__(self):
-        self.session = get_session(get_db_path())
+    def __init__(self, session):
+        self.session = session
 
     def list(self):
         return self.session.query(Bookmark).all()
 
     def add(self, url):
         bookmark = Bookmark(url=url)
-        self.session.add(boomark)
+        self.session.add(bookmark)
         self.session.commit()
 
     def add_tag(self, url, tag):
@@ -46,5 +46,5 @@ class LocalProxy():
         session.commit()
 
     def delete(self, url):
-        session.query(Bookmark).filter(Bookmark.url == url).delete()
-        session.commit()
+        self.session.query(Bookmark).filter(Bookmark.url == url).delete()
+        self.session.commit()
