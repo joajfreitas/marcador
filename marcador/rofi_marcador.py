@@ -10,7 +10,7 @@ class RofiMarcador():
         self.rofi = Rofi()
         self.session = session
 
-        self.proxy = RemoteProxy(("127.0.0.1", 6003))
+        self.proxy = RemoteProxy(("joajfreitas.xyz", 6003))
 
     def list(self):
         return [bookmark.url for bookmark in self.proxy.list()]
