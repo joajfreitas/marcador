@@ -2,7 +2,7 @@ import click
 import json
 import socket
 
-from marcador.marcador_lib import get_session, get_db_path, Bookmark
+from marcador.lib import get_session, get_db_path, Bookmark
 
 def marcador_list(session, args):
     bookmarks = session.query(Bookmark).all()
@@ -30,6 +30,8 @@ def marcador_delete(session, args):
     session.commit()
 
 @click.command()
+@click.option('hostname', default='127.0.0.1')
+@click.option('port', type=int, default=6003)
 def server():
     session = get_session(get_db_path())
 

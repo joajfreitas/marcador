@@ -1,16 +1,13 @@
 from webbrowser import open
 from .rofi import Rofi
-from .marcador_lib import Bookmark, Tag, BookmarkTag
-from .proxy import RemoteProxy
+from .lib import Bookmark, Tag, BookmarkTag
 import clipboard
 
 
 class RofiMarcador():
-    def __init__(self, session):
+    def __init__(self, proxy):
         self.rofi = Rofi()
-        self.session = session
-
-        self.proxy = RemoteProxy(("joajfreitas.xyz", 6003))
+        self.proxy = proxy
 
     def list(self):
         return [bookmark.url for bookmark in self.proxy.list()]
@@ -60,9 +57,9 @@ class RofiMarcador():
 
     def launch(self):
         self.bookmarks = self.list()
-        ret = self.rofi.select("> ", 
-                          self.bookmarks, 
-                          key1=('Alt+n', "Add new bookmark"), 
+        ret = self.rofi.select("> ",
+                          self.bookmarks,
+                          key1=('Alt+n', "Add new bookmark"),
                           key2=('Alt+d', "Delete the selected bookmark"),
                           key3=('Alt+e', "Edit the selected bookmark"))
         index, key = ret
