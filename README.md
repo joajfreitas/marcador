@@ -2,41 +2,38 @@
 
 # Marcador
 
-minimal bookmark manager
+Minimal bookmark manager
 
 ## Install
+
 	$ pip install marcador
 
 ## Usage
-CLI interface
 
+CLI interface
+	
 	$ marcador --help
 
 	Usage: marcador [OPTIONS] COMMAND [ARGS]...
 	
 	Options:
-	  --help  Show this message and exit.
+	  --version
+	  --help     Show this message and exit.
 	
 	Commands:
 	  add
-	  bookmark
-	  edit
-	  html
-	  open
-	  print
-	  remove
+	  bookmarks
+	  delete
 	  rofi
-	  tag-search
-	  url
+	  server
+
 
 ### Rofi interface
 
-	$ marcador rofi <bookmark file>
+	$ marcador rofi
 
 ## Thanks
 This project is heavily inspired by [buku](https://github.com/jarun/Buku)
 
 ## Screenshots
 ![bookmarks screenshot](https://raw.githubusercontent.com/joajfreitas/marcador/master/showcase_pretty.png)
-
-

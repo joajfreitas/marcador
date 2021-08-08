@@ -36,7 +36,7 @@ def server(hostname, port):
     session = get_session(get_db_path())
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind(("127.0.0.1", 6003))
+    sock.bind((hostname, port))
 
     cmds = {
         'list': marcador_list,
