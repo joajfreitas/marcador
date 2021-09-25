@@ -63,6 +63,10 @@ class BookmarkTag(Base):
 
 
 def get_session(db_path: Path) -> Session:
+    if not os.path.isfile(db_path):
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        db_path.touch()
+
     engine = create_engine("sqlite:///"+str(db_path))
     Base.metadata.create_all(engine)
     Base.metadata.bind = engine
