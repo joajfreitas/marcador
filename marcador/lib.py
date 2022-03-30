@@ -18,6 +18,7 @@ def get_user_data_dir():
     return user_data_dir(appname, appauthor)
 
 def get_db_path():
+    return "marcador.json"
     return Path(get_user_data_dir()) / Path("marcador.sqlite")
 
 Base = declarative_base()
