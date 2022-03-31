@@ -7,11 +7,16 @@ from typing import *
 def cmd(name, args):
     return bytes(json.dumps({'cmd': name, 'args': args}), 'utf-8')
 
-class Bookmark():
+class Bookmark(dict):
     def __init__(self, url, description, tags):
         self.url = url
         self.description = description
         self.tags = tags
+        dict.__init__(self, {"url": url, "description": description, "tags": tags})
+
+
+    def __repr__(self) -> str:
+        return f"{self.url}"
 
 class Proxy():
     def list(self) -> List[Bookmark]:

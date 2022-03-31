@@ -4,6 +4,7 @@ from pprint import pprint
 
 import click
 import sys
+import json
 
 from marcador.version import version as marcador_version
 from marcador.rofi_marcador import RofiMarcador
@@ -32,9 +33,15 @@ def add(url, description, tags, hostname, port):
 @click.command(name='bookmarks')
 @click.option('--hostname', default=None, help="hostname of the marcador server")
 @click.option('--port', default=None, type=int, help="post of the marcador server")
-def print_bookmarks(hostname, port):
+@click.option('-j', is_flag=True, default=False, type=bool, help="output json")
+def print_bookmarks(hostname, port, j):
     proxy = get_proxy(hostname, port)
-    pprint(proxy.list())
+
+    if j:
+        print(json.dumps(proxy.list()))
+    else:
+        for i, bookmark in enumerate(proxy.list()):
+            print(bookmark)
 
 
 

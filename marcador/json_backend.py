@@ -43,20 +43,21 @@ class JsonProxy(Proxy):
 
     def save(self):
         with open(self.path, "w") as f:
+            print(self.book, type(self.book))
             f.write(json.dumps(self.book.to_dict()))
-    
+
     def list(self) -> List[Bookmark]:
-        return self.book.bookmarks
+        return [Bookmark(bookmark.url, bookmark.description, [tag.tag for tag in bookmark.tags]) for bookmark in self.book.bookmarks]
 
     def add(self, url: str, description: str, tags: List[str]):
         if self.book.get(url) is not None:
             return
-    
-    
+
+
         tags = [Tag(tag) for tag in tags]
-        self.book.bookmarks.append(Bookmark(url, description, tags))
+        self.book.bookmarks.append(JsonBookmark(url, description, tags))
         self.save()
-    
+
     def add_tag(self, url: str, tag: str):
         index = self.book.bookmarks.get_index(url)
 
