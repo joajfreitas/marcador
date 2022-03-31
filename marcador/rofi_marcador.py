@@ -1,10 +1,11 @@
 from webbrowser import open
 from .rofi import Rofi
-from .lib import Bookmark, Tag, BookmarkTag
+
+# from .lib import Bookmark, Tag, BookmarkTag
 import clipboard
 
 
-class RofiMarcador():
+class RofiMarcador:
     def __init__(self, proxy):
         self.rofi = Rofi()
         self.proxy = proxy
@@ -37,7 +38,7 @@ class RofiMarcador():
         self.proxy.delete(bookmark.url)
 
     def edit(self, index):
-        i = self.bookmarks[index].split(',')[0]
+        i = self.bookmarks[index].split(",")[0]
         self.db.edit_bookmark(i)
         self.launch()
         return
@@ -54,10 +55,12 @@ class RofiMarcador():
 
     def launch(self):
         self.bookmarks = self.list()
-        ret = self.rofi.select("> ",
-                          self.bookmarks,
-                          key1=('Alt+n', "Add new bookmark"),
-                          key2=('Alt+d', "Delete the selected bookmark"),
-                          key3=('Alt+e', "Edit the selected bookmark"))
+        ret = self.rofi.select(
+            "> ",
+            self.bookmarks,
+            key1=("Alt+n", "Add new bookmark"),
+            key2=("Alt+d", "Delete the selected bookmark"),
+            key3=("Alt+e", "Edit the selected bookmark"),
+        )
         index, key = ret
         self.dispatch(index, key)

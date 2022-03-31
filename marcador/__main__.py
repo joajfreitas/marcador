@@ -10,8 +10,9 @@ from marcador.version import version as marcador_version
 from marcador.rofi_marcador import RofiMarcador
 from marcador.server import server
 from marcador.proxy import RemoteProxy
-from marcador.lib import get_session, get_db_path
+from marcador.lib import get_db_path
 from marcador.json_backend import JsonProxy
+
 
 def get_proxy(hostname, port):
     if hostname is not None and port is not None:
@@ -24,16 +25,17 @@ def get_proxy(hostname, port):
 @click.argument("url")
 @click.argument("description")
 @click.argument("tags")
-@click.option('--hostname', default=None, help="hostname of the marcador server")
-@click.option('--port', default=None, type=int, help="post of the marcador server")
+@click.option("--hostname", default=None, help="hostname of the marcador server")
+@click.option("--port", default=None, type=int, help="post of the marcador server")
 def add(url, description, tags, hostname, port):
     proxy = get_proxy(hostname, port)
-    proxy.add(url, description, tags.split(','))
+    proxy.add(url, description, tags.split(","))
 
-@click.command(name='bookmarks')
-@click.option('--hostname', default=None, help="hostname of the marcador server")
-@click.option('--port', default=None, type=int, help="post of the marcador server")
-@click.option('-j', is_flag=True, default=False, type=bool, help="output json")
+
+@click.command(name="bookmarks")
+@click.option("--hostname", default=None, help="hostname of the marcador server")
+@click.option("--port", default=None, type=int, help="post of the marcador server")
+@click.option("-j", is_flag=True, default=False, type=bool, help="output json")
 def print_bookmarks(hostname, port, j):
     proxy = get_proxy(hostname, port)
 
@@ -44,19 +46,18 @@ def print_bookmarks(hostname, port, j):
             print(bookmark)
 
 
-
 @click.command()
-@click.argument('url')
-@click.option('--hostname', default=None, help="hostname of the marcador server")
-@click.option('--port', default=None, type=int, help="post of the marcador server")
+@click.argument("url")
+@click.option("--hostname", default=None, help="hostname of the marcador server")
+@click.option("--port", default=None, type=int, help="post of the marcador server")
 def delete(url, hostname, port):
     proxy = get_proxy(hostname, port)
     proxy.delete(url)
 
 
 @click.command(name="rofi")
-@click.option('--hostname', default=None, help="hostname of the marcador server")
-@click.option('--port', default=None, type=int, help="post of the marcador server")
+@click.option("--hostname", default=None, help="hostname of the marcador server")
+@click.option("--port", default=None, type=int, help="post of the marcador server")
 def rofi_launch(hostname=None, port=None):
     proxy = get_proxy(hostname, port)
 
@@ -67,8 +68,10 @@ def rofi_launch(hostname=None, port=None):
 @click.group(invoke_without_command=True)
 @click.option("--version", is_flag=True, default=False)
 def main(version):
-    if len(sys.argv)  == 1:
-        print("marcador.\nVersion:", marcador_version, "\nFor usage see marcador --help")
+    if len(sys.argv) == 1:
+        print(
+            "marcador.\nVersion:", marcador_version, "\nFor usage see marcador --help"
+        )
     if version:
         click.echo(marcador_version)
 

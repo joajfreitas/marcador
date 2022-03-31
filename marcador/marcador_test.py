@@ -3,6 +3,7 @@ import os
 from marcador.proxy import LocalProxy
 from marcador.lib import get_session, Bookmark
 
+
 @pytest.fixture
 def database():
     test_file = "test_temp"
@@ -17,24 +18,27 @@ def database():
 
     session.commit()
 
-
     yield session
     os.remove(test_file)
+
 
 @pytest.fixture
 def proxy(database):
     return LocalProxy(database)
 
+
 def test_list(proxy):
     l = list(proxy.list())
-    assert(len(l) == 6)
+    assert len(l) == 6
+
 
 def test_add(proxy):
-    assert(len(list(proxy.list())) == 6)
+    assert len(list(proxy.list())) == 6
     proxy.add("4chan.org")
-    assert(len(list(proxy.list())) == 7)
+    assert len(list(proxy.list())) == 7
+
 
 def test_delete(proxy):
-    assert(len(list(proxy.list())) == 6)
+    assert len(list(proxy.list())) == 6
     proxy.delete("reddit.com")
-    assert(len(list(proxy.list())) == 5)
+    assert len(list(proxy.list())) == 5
