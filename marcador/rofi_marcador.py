@@ -28,10 +28,7 @@ class RofiMarcador():
 
         tags = tags.split(",")
 
-        self.proxy.add(url)
-
-        for tag in tags:
-            self.proxy.add_tag(url, tag)
+        self.proxy.add(url, "", tags)
 
         return
 

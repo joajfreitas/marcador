@@ -4,40 +4,44 @@ from pprint import pprint
 
 import click
 import sys
+import json
 
 from marcador.version import version as marcador_version
 from marcador.rofi_marcador import RofiMarcador
 from marcador.server import server
-from marcador.proxy import RemoteProxy, LocalProxy
+from marcador.proxy import RemoteProxy
 from marcador.lib import get_session, get_db_path
+from marcador.json_backend import JsonProxy
 
 def get_proxy(hostname, port):
     if hostname is not None and port is not None:
         return RemoteProxy((hostname, port))
     else:
-        return LocalProxy(get_session(get_db_path()))
+        return JsonProxy(get_db_path())
 
 
 @click.command()
 @click.argument("url")
+@click.argument("description")
 @click.argument("tags")
 @click.option('--hostname', default=None, help="hostname of the marcador server")
 @click.option('--port', default=None, type=int, help="post of the marcador server")
-def add(url, tags, hostname, port):
+def add(url, description, tags, hostname, port):
     proxy = get_proxy(hostname, port)
-    proxy.add(url)
-
-    tags = tags.split(",")
-    for tag in tags:
-        proxy.add_tag(url, tag)
-
+    proxy.add(url, description, tags.split(','))
 
 @click.command(name='bookmarks')
 @click.option('--hostname', default=None, help="hostname of the marcador server")
 @click.option('--port', default=None, type=int, help="post of the marcador server")
-def print_bookmarks(hostname, port):
+@click.option('-j', is_flag=True, default=False, type=bool, help="output json")
+def print_bookmarks(hostname, port, j):
     proxy = get_proxy(hostname, port)
-    pprint(proxy.list())
+
+    if j:
+        print(json.dumps(proxy.list()))
+    else:
+        for i, bookmark in enumerate(proxy.list()):
+            print(bookmark)
 
 
 
