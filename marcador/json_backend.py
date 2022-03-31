@@ -6,13 +6,16 @@ from typing import *
 
 from .proxy import Proxy, Bookmark
 
+
 class Tag(Model):
     tag: fields.Str()
+
 
 class JsonBookmark(Model):
     url: fields.Str()
     description: fields.Str()
     tags: fields.List(Tag)
+
 
 class JsonBook(Model):
     bookmarks: fields.List(JsonBookmark)
@@ -38,7 +41,7 @@ class JsonProxy(Proxy):
         if not os.path.exists(path):
             self.book = JsonBook(bookmarks=[])
         else:
-            with open(path) as  f:
+            with open(path) as f:
                 self.book = JsonBook.from_json(f.read())
 
     def save(self):
@@ -47,12 +50,16 @@ class JsonProxy(Proxy):
             f.write(json.dumps(self.book.to_dict()))
 
     def list(self) -> List[Bookmark]:
-        return [Bookmark(bookmark.url, bookmark.description, [tag.tag for tag in bookmark.tags]) for bookmark in self.book.bookmarks]
+        return [
+            Bookmark(
+                bookmark.url, bookmark.description, [tag.tag for tag in bookmark.tags]
+            )
+            for bookmark in self.book.bookmarks
+        ]
 
     def add(self, url: str, description: str, tags: List[str]):
         if self.book.get(url) is not None:
             return
-
 
         tags = [Tag(tag) for tag in tags]
         self.book.bookmarks.append(JsonBookmark(url, description, tags))
@@ -75,10 +82,13 @@ class JsonProxy(Proxy):
 
 
 def main():
-    bookmark = Bookmark(url="www.google.com", description="google", tags=[Tag("search")])
+    bookmark = Bookmark(
+        url="www.google.com", description="google", tags=[Tag("search")]
+    )
     book = Book([bookmark])
     print(book.to_dict())
     print(json.dumps(bookmark.to_dict()))
+
 
 if __name__ == "__main__":
     main()
