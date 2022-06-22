@@ -5,6 +5,7 @@ from pprint import pprint
 import click
 import sys
 import json
+import logging
 
 from marcador.version import version as marcador_version
 from marcador.rofi_marcador import RofiMarcador
@@ -17,8 +18,10 @@ from marcador.json_backend import JsonProxy
 def get_proxy(hostname, port):
     if hostname is not None and port is not None:
         return RemoteProxy((hostname, port))
-    else:
+    elif hostname is None and port is None:
         return JsonProxy(get_db_path())
+    else:
+        logging.error("Using only of hostname and port, both required for remote operation")
 
 
 @click.command()

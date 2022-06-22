@@ -30,5 +30,6 @@ setup(
         "clipboard",
         "click",
         "sqlalchemy",
+        "serde",
     ],
 )

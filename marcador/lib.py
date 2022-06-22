@@ -20,4 +20,5 @@ def get_user_data_dir():
 
 
 def get_db_path():
+    print(get_user_data_dir())
     return Path(get_user_data_dir()) / "marcador.json"
