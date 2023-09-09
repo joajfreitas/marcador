@@ -3,6 +3,8 @@ import json
 import socket
 import logging
 
+from .bottle import route, run, request
+
 from marcador.lib import get_db_path
 from marcador.json_backend import JsonProxy
 
@@ -13,6 +15,9 @@ class Ok:
 
     def ok(self):
         return self.x
+
+    def dict(self):
+        return {"type": "ok", "payload": self.x}
 
     def json(self):
         return bytes(json.dumps({"type": "ok", "payload": self.x}), "utf-8")
@@ -25,11 +30,14 @@ class Error:
     def error(self):
         return self.error
 
+    def dict(self):
+        return {"type": "error", "payload": self.error}
+
     def json(self):
         return bytes(json.dumps({"type": "error", "payload": self.error}), "utf-8")
 
 
-def marcador_list(session, args):
+def marcador_list(session):
     bookmarks = session.list()
     return Ok(
         [
@@ -43,13 +51,13 @@ def marcador_list(session, args):
     )
 
 
-def marcador_add(session, args):
-    session.add(args.get("url"), args.get("description"), args.get("tags"))
+def marcador_add(session, url, description, tags):
+    session.add(url, description, tags)
     return Ok(())
 
 
-def marcador_delete(session, args):
-    bookmark = session.delete(arg.get("url"))
+def marcador_delete(session, url):
+    bookmark = session.delete(url)
     return Ok(
         {
             "url": bookmark.url,
@@ -63,29 +71,31 @@ def marcador_delete(session, args):
 @click.option("--hostname", default="0.0.0.0")
 @click.option("--port", type=int, default=6003)
 def server(hostname, port):
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-
-    print(get_db_path())
     session = JsonProxy(get_db_path())
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((hostname, port))
+    @route("/list")
+    def list():
+        return marcador_list(session).dict()
 
-    cmds = {
-        "list": marcador_list,
-        "add": marcador_add,
-        "delete": marcador_delete,
-    }
+    @route("/add", method="POST")
+    def add():
+        url = request.params.get("url")
+        description = request.params.get("description")
+        tags = request.params.get("tags")
 
-    while True:
-        try:
-            msg, addr = sock.recvfrom(1024)
-            print(msg, addr)
-            msg = json.loads(msg)
-            ret = cmds[msg["cmd"]](session, msg["args"])
-            sock.sendto(ret.json(), addr)
-        except Exception as e:
-            logging.error(repr(e))
-            sock.sendto(Error(repr(e)).json(), addr)
-            continue
+        if url is None or description is None or tags is None:
+            return Error("Expected params were: url, description and tags").dict()
+        return marcador_add(
+            session, request.params.url, request.params.description, request.params.tags
+        ).dict()
+
+    @route("/delete", method="POST")
+    def delete():
+        url = request.params.get("url")
+
+        if url is None:
+            return Error("Expected params were: url").dict()
+
+        return marcador_delete(session, url).dict()
+
+    run(host=hostname, port=port, debug=True)
