@@ -23,4 +23,5 @@ build() {
 package() {
     cd "$_name-$pkgver"
     python -m installer --destdir="$pkgdir" dist/*.whl
+    install -D --mode=644 ${srcdir}/systemd/marcador.service ${pkgdir}/usr/lib/systemd/user/marcador.service
 }
