@@ -1,5 +1,3 @@
-![](https://gitlab.com/joajfreitas/bookmarks/badges/master/pipeline.svg)
-
 # Marcador
 
 Minimal bookmark manager
@@ -12,21 +10,19 @@ Minimal bookmark manager
 
 CLI interface
 	
-	$ marcador --help
 
-	Usage: marcador [OPTIONS] COMMAND [ARGS]...
-	
-	Options:
-	  --version
-	  --help     Show this message and exit.
-	
-	Commands:
-	  add
-	  bookmarks
-	  delete
-	  rofi
-	  server
+    Usage: marcador [OPTIONS] COMMAND [ARGS]...
 
+    Options:
+      --version
+      --help     Show this message and exit.
+
+    Commands:
+      add
+      bookmarks
+      delete
+      rofi
+      server
 
 ### Rofi interface
 
