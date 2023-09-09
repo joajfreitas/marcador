@@ -1,0 +1,23 @@
+name: Marcador CI
+
+on: push
+
+jobs:
+  black:
+    name: Python black
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run black
+        uses: cytopia/docker-black@0.8
+        with:
+          path: 'marcador/'
+
+  install:
+    name: Install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Pip install
+        run: |
+          pip install .
