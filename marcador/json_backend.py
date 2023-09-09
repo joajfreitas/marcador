@@ -45,16 +45,11 @@ class JsonProxy(Proxy):
                 self.book = JsonBook.from_json(f.read())
 
     def save(self):
-        print("save", self.path)
-
         if not os.path.isdir(self.path.parent):
             os.makedirs(self.path.parent, exist_ok=True)
 
         with open(self.path, "w") as f:
-            print(self.book, type(self.book))
             f.write(json.dumps(self.book.to_dict()))
-
-        print("done saving")
 
     def list(self) -> List[Bookmark]:
         return [
@@ -85,7 +80,9 @@ class JsonProxy(Proxy):
         bookmark = self.book.bookmarks.pop(index)
         self.save()
 
-        return Bookmark(bookmark.url, bookmark.description, bookmark.tags)
+        return Bookmark(
+            bookmark.url, bookmark.description, [tag.tag for tag in bookmark.tags]
+        )
 
 
 def main():

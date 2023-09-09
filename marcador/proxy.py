@@ -1,6 +1,7 @@
 import socket
 import json
 import sys
+import requests
 
 from typing import *
 
@@ -41,13 +42,14 @@ class Proxy:
 class RemoteProxy(Proxy):
     def __init__(self, addr):
         self.addr = addr
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    def get_url(self):
+        return "http://" + self.addr[0] + ":" + str(self.addr[1])
 
     def list(self) -> List[Bookmark]:
-        self.sock.sendto(cmd("list", {}), self.addr)
-        msg, addr = self.sock.recvfrom(1024)
+        r = requests.get(self.get_url() + "/list")
+        msg = r.json()
 
-        msg = json.loads(msg)
         if msg["type"] == "error":
             raise ProxyError(msg["payload"])
 
@@ -59,20 +61,17 @@ class RemoteProxy(Proxy):
         ]
 
     def add(self, url: str, description: str, tags: List[str]):
-        ret = self.sock.sendto(
-            cmd("add", {"url": url, "description": description, "tags": tags}),
-            self.addr,
+        r = requests.post(
+            self.get_url() + "/add",
+            data={"url": url, "description": description, "tags": tags},
         )
+        ret = r.json()
 
-        if ret["type"] == "error":
-            raise ProxyError(ret["payload"])
-
-    def add_tag(self, url: str, tag: str):
-        ret = self.sock.sendto(cmd("tag", {"url": url, "tag": tag}), self.addr)
         if ret["type"] == "error":
             raise ProxyError(ret["payload"])
 
     def delete(self, url: str) -> Bookmark:
-        ret = self.sock.sendto(cmd("delete", {"url": url}), self.addr)
+        r = requests.post(self.get_url() + "/delete", data={"url": url})
+        ret = r.json()
         if ret["type"] == "error":
             raise ProxyError(ret["payload"])
