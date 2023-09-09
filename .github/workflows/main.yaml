@@ -21,3 +21,4 @@ jobs:
       - name: Pip install
         run: |
           pip install .
+          marcador --version
