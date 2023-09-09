@@ -21,7 +21,9 @@ def get_proxy(hostname, port):
     elif hostname is None and port is None:
         return JsonProxy(get_db_path())
     else:
-        logging.error("Using only of hostname and port, both required for remote operation")
+        logging.error(
+            "Using only of hostname and port, both required for remote operation"
+        )
 
 
 @click.command()
