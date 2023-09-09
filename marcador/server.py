@@ -17,6 +17,7 @@ class Ok:
     def json(self):
         return bytes(json.dumps({"type": "ok", "payload": self.x}), "utf-8")
 
+
 class Error:
     def __init__(self, error):
         self.error = error
@@ -27,16 +28,19 @@ class Error:
     def json(self):
         return bytes(json.dumps({"type": "error", "payload": self.error}), "utf-8")
 
+
 def marcador_list(session, args):
     bookmarks = session.list()
-    return Ok([
-        {
-            "url": bookmark.url,
-            "description": bookmark.description,
-            "tags": bookmark.tags,
-        }
-        for bookmark in bookmarks
-    ])
+    return Ok(
+        [
+            {
+                "url": bookmark.url,
+                "description": bookmark.description,
+                "tags": bookmark.tags,
+            }
+            for bookmark in bookmarks
+        ]
+    )
 
 
 def marcador_add(session, args):
@@ -46,11 +50,13 @@ def marcador_add(session, args):
 
 def marcador_delete(session, args):
     bookmark = session.delete(arg.get("url"))
-    return Ok({
-        "url": bookmark.url,
-        "description": bookmark.description,
-        "tags": bookmark.tags,
-    })
+    return Ok(
+        {
+            "url": bookmark.url,
+            "description": bookmark.description,
+            "tags": bookmark.tags,
+        }
+    )
 
 
 @click.command()

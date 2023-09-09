@@ -4,8 +4,10 @@ import sys
 
 from typing import *
 
+
 class ProxyError(Exception):
     pass
+
 
 def cmd(name, args):
     return bytes(json.dumps({"cmd": name, "args": args}), "utf-8")
@@ -44,7 +46,7 @@ class RemoteProxy(Proxy):
     def list(self) -> List[Bookmark]:
         self.sock.sendto(cmd("list", {}), self.addr)
         msg, addr = self.sock.recvfrom(1024)
-        
+
         msg = json.loads(msg)
         if msg["type"] == "error":
             raise ProxyError(msg["payload"])
