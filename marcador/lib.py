@@ -3,12 +3,6 @@ import sqlite3
 from subprocess import call
 from pathlib import Path
 
-from sqlalchemy import Column, ForeignKey, Integer, Float, String, func, create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm.session import Session
-
 from appdirs import user_data_dir
 
 
