@@ -16,7 +16,9 @@ from marcador.json_backend import JsonProxy
 
 
 def get_proxy(hostname, port):
-    if hostname is not None and port is not None:
+    if hostname is not None:
+        if port is None:
+            port = 6003
         return RemoteProxy((hostname, port))
     elif hostname is None and port is None:
         return JsonProxy(get_db_path())
