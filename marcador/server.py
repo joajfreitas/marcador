@@ -73,6 +73,10 @@ def marcador_delete(session, url):
 def server(hostname, port):
     session = JsonProxy(get_db_path())
 
+    @route("/")
+    def hello():
+        return "hello"
+
     @route("/list")
     def list():
         return marcador_list(session).dict()
@@ -97,5 +101,7 @@ def server(hostname, port):
             return Error("Expected params were: url").dict()
 
         return marcador_delete(session, url).dict()
-
-    run(host=hostname, port=port, debug=True)
+    
+    app = default_app()
+    app.mount('/marcador', app)
+    app.run(host=hostname, port=port)
