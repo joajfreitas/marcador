@@ -18,7 +18,7 @@ from marcador.json_backend import JsonProxy
 def get_proxy(hostname):
     if hostname is not None:
         return RemoteProxy(hostname)
-    elif hostname is None and port is None:
+    elif hostname is None:
         return JsonProxy(get_db_path())
     else:
         logging.error(
@@ -37,7 +37,7 @@ def add(url, description, tags, hostname):
 
 
 @click.command(name="bookmarks")
-@click.option("--hostname", default=None, help="hostname of the marcador server")
+@click.option("--hostname", help="hostname of the marcador server")
 @click.option("-j", is_flag=True, default=False, type=bool, help="output json")
 def print_bookmarks(hostname, j):
     proxy = get_proxy(hostname)
