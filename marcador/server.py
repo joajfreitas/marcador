@@ -142,5 +142,6 @@ def server(hostname, port, root):
         return marcador_delete(session, url).dict()
 
     app = default_app()
-    app.mount(config.get("root"), app)
+    if config.get("root") != "/":
+        app.mount(config.get("root"), app)
     app.run(host=config.get("hostname"), port=config.get("port"))
