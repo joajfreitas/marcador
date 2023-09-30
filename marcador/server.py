@@ -70,6 +70,7 @@ def marcador_delete(session, url):
 @click.command()
 @click.option("--hostname", default="0.0.0.0")
 @click.option("--port", type=int, default=6003)
+@click.option("--root", type=str, default="marcador")
 def server(hostname, port):
     session = JsonProxy(get_db_path())
 
@@ -103,5 +104,5 @@ def server(hostname, port):
         return marcador_delete(session, url).dict()
     
     app = default_app()
-    app.mount('/marcador', app)
+    app.mount(root, app)
     app.run(host=hostname, port=port)
