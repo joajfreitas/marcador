@@ -2,13 +2,13 @@
 
 pkgname=python-marcador
 _name=${pkgname#python-}
-pkgver=0.5.0
+pkgver=0.5.2
 pkgrel=1
 pkgdesc='Lightweight bookmark manager with rofi integration'
 arch=('any')
 url='https://pypi.org/project/marcador'
 license=('GPLv3')
-depends=('python' 'python-clipboard' 'python-click' 'python-serde' 'python-appdirs', 'python-toml')
+depends=('python' 'python-clipboard' 'python-click' 'python-serde' 'python-appdirs' 'python-toml')
 optdepends=()
 makedepends=('python-build' 'python-installer' 'python-wheel' 'poetry')
 provides=('marcador')
