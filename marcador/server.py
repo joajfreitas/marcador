@@ -102,7 +102,7 @@ def server(hostname, port):
             return Error("Expected params were: url").dict()
 
         return marcador_delete(session, url).dict()
-    
+
     app = default_app()
     app.mount(root, app)
     app.run(host=hostname, port=port)
