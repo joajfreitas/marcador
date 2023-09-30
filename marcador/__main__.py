@@ -15,11 +15,9 @@ from marcador.lib import get_db_path
 from marcador.json_backend import JsonProxy
 
 
-def get_proxy(hostname, port):
+def get_proxy(hostname):
     if hostname is not None:
-        if port is None:
-            port = 6003
-        return RemoteProxy((hostname, port))
+        return RemoteProxy(hostname)
     elif hostname is None and port is None:
         return JsonProxy(get_db_path())
     else:
@@ -33,18 +31,16 @@ def get_proxy(hostname, port):
 @click.argument("description")
 @click.argument("tags")
 @click.option("--hostname", default=None, help="hostname of the marcador server")
-@click.option("--port", default=None, type=int, help="post of the marcador server")
-def add(url, description, tags, hostname, port):
-    proxy = get_proxy(hostname, port)
+def add(url, description, tags, hostname):
+    proxy = get_proxy(hostname)
     proxy.add(url, description, tags.split(","))
 
 
 @click.command(name="bookmarks")
 @click.option("--hostname", default=None, help="hostname of the marcador server")
-@click.option("--port", default=None, type=int, help="post of the marcador server")
 @click.option("-j", is_flag=True, default=False, type=bool, help="output json")
-def print_bookmarks(hostname, port, j):
-    proxy = get_proxy(hostname, port)
+def print_bookmarks(hostname, j):
+    proxy = get_proxy(hostname)
 
     if j:
         print(json.dumps(proxy.list()))
@@ -56,16 +52,14 @@ def print_bookmarks(hostname, port, j):
 @click.command()
 @click.argument("url")
 @click.option("--hostname", default=None, help="hostname of the marcador server")
-@click.option("--port", default=None, type=int, help="post of the marcador server")
-def delete(url, hostname, port):
+def delete(url, hostname):
     proxy = get_proxy(hostname, port)
     proxy.delete(url)
 
 
 @click.command(name="rofi")
 @click.option("--hostname", default=None, help="hostname of the marcador server")
-@click.option("--port", default=None, type=int, help="post of the marcador server")
-def rofi_launch(hostname=None, port=None):
+def rofi_launch(hostname):
     proxy = get_proxy(hostname, port)
 
     rm = RofiMarcador(proxy)
