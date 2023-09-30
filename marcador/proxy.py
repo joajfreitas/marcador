@@ -44,7 +44,7 @@ class RemoteProxy(Proxy):
         self.addr = addr
 
     def get_url(self):
-        return "http://" + self.addr[0] + ":" + str(self.addr[1])
+        return self.addr
 
     def list(self) -> List[Bookmark]:
         r = requests.get(self.get_url() + "/list")
