@@ -1,12 +1,12 @@
-import click
 import toml
+import click
 import json
 import socket
 import logging
 import appdirs
 from pathlib import Path
 
-from .bottle import route, run, request
+from .bottle import route, run, request, default_app
 
 from marcador.lib import get_db_path
 from marcador.json_backend import JsonProxy
@@ -102,12 +102,12 @@ def config_defaults(config, defaults):
 @click.option("--hostname")
 @click.option("--port", type=int)
 @click.option("--root", type=str)
-def server(hostname, port):
+def server(hostname, port, root):
     config = config_defaults(
         config_cli_overloads(
             load_config_file(), {"hostname": hostname, "port": port, "root": root}
         ),
-        {"hostname": "127.0.0.1", "port": 6003, "root": "marcador"},
+        {"hostname": "127.0.0.1", "port": 6003, "root": "/marcador"},
     )
 
     session = JsonProxy(get_db_path())
