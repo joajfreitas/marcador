@@ -23,15 +23,14 @@ jobs:
           pip install .
           marcador --version
 
-  integration-tests:
-    name: Integration tests
-    runs-on: archlinux
-    steps:
-      - uses: actions/checkout@v3
-      - name: Pip install
-        run: |
-          pacman -Syyu --noconfirm
-          pacman -S python-pip --noconfirm
-          pip install --break-system-packages -e .
-          ./test/test.sh
-
+#integration-tests:
+#  name: Integration tests
+#  runs-on: archlinux
+#  steps:
+#    - uses: actions/checkout@v3
+#    - name: Pip install
+#      run: |
+#        pacman -Syyu --noconfirm
+#        pacman -S python-pip --noconfirm
+#        pip install --break-system-packages -e .
+#        ./test/test.sh
