@@ -22,12 +22,12 @@ function assert {
 
 
 
-#pacman -Syyu --noconfirm
-#pacman -S python-pip --noconfirm
+pacman -Syyu --noconfirm
+pacman -S python-pip --noconfirm
 
 cd /marcador
 
-#pip install --break-system-packages .
+pip install --break-system-packages .
 
 rm -rf /root/.local/share/marcador
 
