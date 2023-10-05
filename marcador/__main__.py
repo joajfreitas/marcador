@@ -60,7 +60,7 @@ def delete(url, hostname):
 @click.command(name="rofi")
 @click.option("--hostname", default=None, help="hostname of the marcador server")
 def rofi_launch(hostname):
-    proxy = get_proxy(hostname, port)
+    proxy = get_proxy(hostname)
 
     rm = RofiMarcador(proxy)
     rm.launch()
