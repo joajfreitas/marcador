@@ -1,3 +1,6 @@
+pub mod models;
+pub mod schema;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
