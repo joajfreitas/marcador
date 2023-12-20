@@ -4,8 +4,6 @@ use rofi;
 
 use std::env;
 
-use marcador2::Bookmarks;
-
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -13,16 +11,16 @@ fn main() {
         .expect("Should have been able to read the file");
 
     
-    let bookmarks = Bookmarks::from_str(&contents);
-    for bookmark in bookmarks.bookmarks() {
-        println!("{}", bookmark.url());
-    }
+    //let bookmarks = Bookmarks::from_str(&contents);
+    //for bookmark in bookmarks.bookmarks() {
+    //    println!("{}", bookmark.url());
+    //}
 
-    let books = bookmarks.bookmarks().iter().map(|x| format!("{}", x.url())).collect::<Vec<String>>();
+    //let books = bookmarks.bookmarks().iter().map(|x| format!("{}", x.url())).collect::<Vec<String>>();
 
-    let url = dbg!(rofi::Rofi::new(&books).run());
-    
-    //open::that(url.unwrap()).unwrap();
-    open::with(url.unwrap(), "firefox").unwrap();
+    //let url = dbg!(rofi::Rofi::new(&books).run());
+    //
+    ////open::that(url.unwrap()).unwrap();
+    //open::with(url.unwrap(), "firefox").unwrap();
 
 }
