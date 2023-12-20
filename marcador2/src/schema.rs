@@ -26,8 +26,4 @@ diesel::table! {
 diesel::joinable!(bookmarks_tags -> bookmarks (bookmark_id));
 diesel::joinable!(bookmarks_tags -> tags (tag_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
-    bookmarks,
-    bookmarks_tags,
-    tags,
-);
+diesel::allow_tables_to_appear_in_same_query!(bookmarks, bookmarks_tags, tags,);
