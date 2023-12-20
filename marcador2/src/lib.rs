@@ -1,38 +1,16 @@
 pub mod models;
 pub mod schema;
 
+use diesel::prelude::*;
+use dotenvy::dotenv;
+use std::env;
+
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Bookmarks {
-    bookmarks: Vec<Bookmark>
-}
+pub fn establish_connection() -> SqliteConnection {
+    dotenv().ok();
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Bookmark {
-    url: String,
-    description: String,
-    tags: Vec<Tag>
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Tag {
-    tag: String
-}
-
-impl Bookmarks {
-    pub fn from_str(contents: &str) -> Bookmarks {
-        serde_json::from_str(&contents).unwrap()
-    }
-
-    pub fn bookmarks(&self) -> &Vec<Bookmark> {
-        &self.bookmarks
-    }
-
-}
-
-impl Bookmark {
-    pub fn url(&self) -> &str {
-        &self.url
-    }
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    SqliteConnection::establish(&database_url)
+        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
