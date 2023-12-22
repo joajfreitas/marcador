@@ -1,5 +1,6 @@
 pub mod models;
 pub mod schema;
+pub mod server;
 
 use diesel::prelude::*;
 use diesel::{delete, insert_into};
@@ -22,37 +23,43 @@ pub struct DeleteParams {
 }
 
 pub trait BookmarkProxy {
-    fn bookmarks(&self) -> Vec<Bookmarks>;
-    fn add(&self, url: &str, description: &str, tags: Vec<String>);
-    fn delete(&self, id: i32);
+    fn bookmarks(&self) -> Result<Vec<Bookmarks>, String>;
+    fn add(&self, url: &str, description: &str, tags: Vec<String>) -> Result<(), String>;
+    fn delete(&self, id: i32) -> Result<(), String>;
 }
 
 pub struct LocalProxy {}
 
 impl BookmarkProxy for LocalProxy {
-    fn bookmarks(&self) -> Vec<Bookmarks> {
+    fn bookmarks(&self) -> Result<Vec<Bookmarks>, String> {
         use self::schema::bookmarks::dsl::*;
-        let conn = &mut establish_connection();
-        bookmarks.load(conn).unwrap()
+        let conn = &mut establish_connection()?;
+        bookmarks
+            .load(conn)
+            .map_err(|_| "Failed to load bookmarks".to_string())
     }
 
-    fn add(&self, link: &str, desc: &str, _tags: Vec<String>) {
+    fn add(&self, link: &str, desc: &str, _tags: Vec<String>) -> Result<(), String> {
         use self::schema::bookmarks::dsl::*;
 
-        let conn = &mut establish_connection();
+        let conn = &mut establish_connection()?;
         insert_into(bookmarks)
             .values((url.eq(link), description.eq(desc)))
             .execute(conn)
-            .unwrap();
+            .map_err(|_| "Failed to add bookmark".to_string())?;
+
+        Ok(())
     }
 
-    fn delete(&self, identifier: i32) {
+    fn delete(&self, identifier: i32) -> Result<(), String> {
         use self::schema::bookmarks::dsl::*;
 
-        let connection = &mut establish_connection();
+        let connection = &mut establish_connection()?;
         delete(bookmarks.filter(id.eq(identifier)))
             .execute(connection)
-            .unwrap();
+            .map_err(|_| "Failed to delete bookmark".to_string())?;
+
+        Ok(())
     }
 }
 
@@ -73,14 +80,14 @@ impl RemoteProxy {
 }
 
 impl BookmarkProxy for RemoteProxy {
-    fn bookmarks(&self) -> Vec<Bookmarks> {
-        reqwest::blocking::get(&self.list_endpoint)
-            .unwrap()
+    fn bookmarks(&self) -> Result<Vec<Bookmarks>, String> {
+        Ok(reqwest::blocking::get(&self.list_endpoint)
+            .map_err(|_| "Failed to get web resource")?
             .json::<Vec<Bookmarks>>()
-            .unwrap()
+            .map_err(|_| "Failed to parse json")?)
     }
 
-    fn add(&self, link: &str, desc: &str, _tags: Vec<String>) {
+    fn add(&self, link: &str, desc: &str, _tags: Vec<String>) -> Result<(), String> {
         let client = reqwest::blocking::Client::new();
         client
             .post(&self.add_endpoint)
@@ -89,22 +96,26 @@ impl BookmarkProxy for RemoteProxy {
                 description: desc.to_string(),
             })
             .send()
-            .unwrap();
+            .map_err(|_| "Failed to send post request")?;
+
+        Ok(())
     }
-    fn delete(&self, identifier: i32) {
+    fn delete(&self, identifier: i32) -> Result<(), String> {
         let client = reqwest::blocking::Client::new();
         client
             .post(&self.delete_endpoint)
             .json(&DeleteParams { id: identifier })
             .send()
-            .unwrap();
+            .map_err(|_| "Failed to send post request")?;
+
+        Ok(())
     }
 }
 
-pub fn establish_connection() -> SqliteConnection {
+pub fn establish_connection() -> Result<SqliteConnection, String> {
     dotenv().ok();
 
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let database_url = env::var("DATABASE_URL").map_err(|_| "DATABASE_URL must be set")?;
     SqliteConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+        .map_err(|_| format!("Error connecting to {}", database_url))
 }
