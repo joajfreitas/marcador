@@ -2,6 +2,7 @@ use clap::{CommandFactory, Parser, Subcommand};
 use copypasta::{ClipboardContext, ClipboardProvider};
 
 use marcador::models::Bookmarks;
+use marcador::rofi;
 use marcador::server::server;
 use marcador::{BookmarkProxy, RemoteProxy};
 
@@ -47,7 +48,6 @@ fn rofi_delete(proxy: &RemoteProxy, index: usize, books: Vec<Bookmarks>) -> Resu
 fn rofi_open(url: &str) -> Result<(), String> {
     open::with(url, "firefox").map_err(|_| "Failed to open url")?;
     Ok(())
-
 }
 
 fn command_rofi(host: String) -> Result<(), String> {
