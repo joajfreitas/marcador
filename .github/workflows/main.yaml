@@ -2,35 +2,34 @@ name: Marcador CI
 
 on: push
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
-  black:
-    name: Python black
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Run black
-        uses: cytopia/docker-black@0.8
+    - uses: actions/checkout@v2
+    - uses: Swatinem/rust-cache@v1
+    - name: Version
+      run: rustc --version
+    - name: Build
+      run: cargo rustc --lib --verbose -- -D warnings
+       | cargo rustc --bin main --verbose -- -D warnings
+
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v1
+      - uses: actions-rs/cargo@v1
         with:
-          path: 'marcador/'
+          command: clippy
+          args: --all-features -- -D warnings
 
-  install:
-    name: Install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Pip install
-        run: |
-          pip install .
-          marcador --version
-
-#integration-tests:
-#  name: Integration tests
-#  runs-on: archlinux
-#  steps:
-#    - uses: actions/checkout@v3
-#    - name: Pip install
-#      run: |
-#        pacman -Syyu --noconfirm
-#        pacman -S python-pip --noconfirm
-#        pip install --break-system-packages -e .
-#        ./test/test.sh
+  format-check:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v2
+        - name: Run rustfmt
+          run: cargo fmt
