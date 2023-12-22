@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand, CommandFactory};
+use clap::{CommandFactory, Parser, Subcommand};
 use copypasta::{ClipboardContext, ClipboardProvider};
 
 use marcador::models::Bookmarks;
@@ -47,6 +47,7 @@ fn rofi_delete(proxy: &RemoteProxy, index: usize, books: Vec<Bookmarks>) -> Resu
 fn rofi_open(url: &str) -> Result<(), String> {
     open::with(url, "firefox").map_err(|_| "Failed to open url")?;
     Ok(())
+
 }
 
 fn command_rofi(host: String) -> Result<(), String> {
@@ -79,19 +80,16 @@ fn command_rofi(host: String) -> Result<(), String> {
 fn main() -> Result<(), String> {
     let cli = Cli::parse();
     let mut cmd = Cli::command();
-    
+
     if let Some(command) = cli.command {
-        match command
-        {
+        match command {
             Commands::Rofi { host } => command_rofi(host),
             Commands::Server {} => server(),
         }?;
-    }
-    else {
+    } else {
         cmd.print_help().unwrap();
         return Ok(());
     }
-
 
     Ok(())
 }
