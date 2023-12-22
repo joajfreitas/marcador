@@ -1,4 +1,5 @@
 pub mod models;
+pub mod rofi;
 pub mod schema;
 pub mod server;
 

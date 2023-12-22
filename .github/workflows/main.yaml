@@ -15,7 +15,7 @@ jobs:
       run: rustc --version
     - name: Build
       run: cargo rustc --lib --verbose -- -D warnings
-       | cargo rustc --bin main --verbose -- -D warnings
+       | cargo rustc --bin marcador --verbose -- -D warnings
 
   clippy:
     runs-on: ubuntu-latest
