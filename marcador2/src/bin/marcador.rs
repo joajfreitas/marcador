@@ -1,10 +1,9 @@
 use marcador2::models::Bookmarks;
-use marcador2::{BookmarkProxy, RemoteProxy};
 use marcador2::server::server;
+use marcador2::{BookmarkProxy, RemoteProxy};
 
 use clap::{Parser, Subcommand};
 use copypasta::{ClipboardContext, ClipboardProvider};
-
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -16,7 +15,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Rofi { host: String },
-    Server { },
+    Server {},
 }
 
 fn rofi_add(proxy: &RemoteProxy) -> Result<(), String> {
@@ -28,14 +27,16 @@ fn rofi_add(proxy: &RemoteProxy) -> Result<(), String> {
         .prompt("URL")
         .run()
         .map_err(|_| "Adding bookmark aborted")?
-        .1;
+        .1
+        .unwrap();
 
     let v: Vec<String> = vec![];
     let description = rofi::Rofi::new(&v)
         .prompt("Description")
         .run()
         .map_err(|_| "Adding description aborted")?
-        .1;
+        .1
+        .unwrap();
     proxy.add(&s, &description, vec![])
 }
 
@@ -64,13 +65,13 @@ fn command_rofi(host: String) -> Result<(), String> {
         .message("<b>Alt+n</b>: Add new bookmark <b>Alt+d</b>: Delete bookmark")
         .run_index();
 
-    let _ = match ret {
+    match ret {
         Ok((10, _)) => rofi_add(&remote_proxy),
-        Ok((11, index)) => rofi_delete(&remote_proxy, index, bookmarks),
-        Ok((0, index)) => rofi_open(&bookmarks[index].url),
+        Ok((11, Some(index))) => rofi_delete(&remote_proxy, index, bookmarks),
+        Ok((0, Some(index))) => rofi_open(&bookmarks[index].url),
         Err(_) => Ok(()),
         _ => panic!(),
-    };
+    }?;
 
     Ok(())
 }
@@ -83,7 +84,7 @@ fn main() -> Result<(), String> {
         .ok_or("Failed to parse command line arguments")?
     {
         Commands::Rofi { host } => command_rofi(host),
-        Commands::Server { } => server(),
+        Commands::Server {} => server(),
     }?;
 
     Ok(())

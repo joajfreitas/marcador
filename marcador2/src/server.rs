@@ -14,7 +14,10 @@ async fn endpoint_list(state: web::Data<State>) -> web::Json<Vec<Bookmarks>> {
 }
 
 async fn endpoint_add(state: web::Data<State>, info: web::Json<AddParams>) -> Result<String> {
-    let _ = state.local_proxy.add(&info.url, &info.description, vec![]).unwrap();
+    let _ = state
+        .local_proxy
+        .add(&info.url, &info.description, vec![])
+        .unwrap();
     Ok("nice".to_string())
 }
 
@@ -26,12 +29,13 @@ async fn endpoint_delete(
     Ok(web::Json(0))
 }
 
-pub fn server() -> Result<(), String>{
+pub fn server() -> Result<(), String> {
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .unwrap()
-        .block_on(async_server()).map_err(|err| format!("{:?}", err))
+        .block_on(async_server())
+        .map_err(|err| format!("{:?}", err))
 }
 
 async fn async_server() -> std::io::Result<()> {
@@ -40,9 +44,9 @@ async fn async_server() -> std::io::Result<()> {
             .app_data(web::Data::new(State {
                 local_proxy: LocalProxy {},
             }))
-            .route("/list", web::get().to(endpoint_list))
-            .route("/add", web::post().to(endpoint_add))
-            .route("/delete", web::post().to(endpoint_delete))
+            .route("/marcador/list", web::get().to(endpoint_list))
+            .route("/marcador/add", web::post().to(endpoint_add))
+            .route("/marcador/delete", web::post().to(endpoint_delete))
     })
     .bind(("0.0.0.0", 8080))?
     .run()
