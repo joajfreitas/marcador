@@ -1,9 +1,9 @@
-use marcador2::models::Bookmarks;
-use marcador2::server::server;
-use marcador2::{BookmarkProxy, RemoteProxy};
-
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, CommandFactory};
 use copypasta::{ClipboardContext, ClipboardProvider};
+
+use marcador::models::Bookmarks;
+use marcador::server::server;
+use marcador::{BookmarkProxy, RemoteProxy};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -78,14 +78,20 @@ fn command_rofi(host: String) -> Result<(), String> {
 
 fn main() -> Result<(), String> {
     let cli = Cli::parse();
+    let mut cmd = Cli::command();
+    
+    if let Some(command) = cli.command {
+        match command
+        {
+            Commands::Rofi { host } => command_rofi(host),
+            Commands::Server {} => server(),
+        }?;
+    }
+    else {
+        cmd.print_help().unwrap();
+        return Ok(());
+    }
 
-    match cli
-        .command
-        .ok_or("Failed to parse command line arguments")?
-    {
-        Commands::Rofi { host } => command_rofi(host),
-        Commands::Server {} => server(),
-    }?;
 
     Ok(())
 }

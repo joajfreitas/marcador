@@ -14,7 +14,7 @@ async fn endpoint_list(state: web::Data<State>) -> web::Json<Vec<Bookmarks>> {
 }
 
 async fn endpoint_add(state: web::Data<State>, info: web::Json<AddParams>) -> Result<String> {
-    let _ = state
+    state
         .local_proxy
         .add(&info.url, &info.description, vec![])
         .unwrap();
@@ -25,7 +25,7 @@ async fn endpoint_delete(
     state: web::Data<State>,
     info: web::Json<DeleteParams>,
 ) -> Result<web::Json<i32>> {
-    let _ = state.local_proxy.delete(info.id).unwrap();
+    state.local_proxy.delete(info.id).unwrap();
     Ok(web::Json(0))
 }
 
