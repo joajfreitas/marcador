@@ -22,7 +22,7 @@ enum Commands {
         db: Option<String>,
     },
     Server {
-        db: String
+        db: String,
     },
     Add {
         #[arg(long)]
@@ -31,10 +31,10 @@ enum Commands {
         db: Option<String>,
         url: String,
         description: String,
-    }
+    },
 }
 
-fn rofi_add(proxy: &Box<dyn BookmarkProxy>) -> Result<(), String> {
+fn rofi_add(proxy: &dyn BookmarkProxy) -> Result<(), String> {
     let mut ctx = ClipboardContext::new().map_err(|_| "Failed to create clipboard context")?;
     let content = ctx
         .get_contents()
@@ -57,7 +57,7 @@ fn rofi_add(proxy: &Box<dyn BookmarkProxy>) -> Result<(), String> {
 }
 
 fn rofi_delete(
-    proxy: &Box<dyn BookmarkProxy>,
+    proxy: &dyn BookmarkProxy,
     index: usize,
     books: Vec<Bookmarks>,
 ) -> Result<(), String> {
@@ -70,16 +70,16 @@ fn rofi_open(url: &str) -> Result<(), String> {
 }
 
 fn get_proxy(host: Option<String>, db: Option<String>) -> Result<Box<dyn BookmarkProxy>, String> {
-    if db.is_some() {
-        Ok(Box::new(LocalProxy::new(&db.unwrap())))
-    } else if host.is_some() {
-        Ok(Box::new(RemoteProxy::new(&host.unwrap())))
+    if let Some(db) = db {
+        Ok(Box::new(LocalProxy::new(&db)))
+    } else if let Some(host) = host {
+        Ok(Box::new(RemoteProxy::new(&host)))
     } else {
         Err("You must provide either a --host or --db flag".to_string())
     }
 }
 
-fn command_rofi(proxy: Box<dyn BookmarkProxy>) -> Result<(), String> {
+fn command_rofi(proxy: &dyn BookmarkProxy) -> Result<(), String> {
     let bookmarks = proxy.bookmarks()?;
 
     let books = bookmarks
@@ -95,8 +95,8 @@ fn command_rofi(proxy: Box<dyn BookmarkProxy>) -> Result<(), String> {
         .run_index();
 
     match ret {
-        Ok((10, _)) => rofi_add(&proxy),
-        Ok((11, Some(index))) => rofi_delete(&proxy, index, bookmarks),
+        Ok((10, _)) => rofi_add(proxy),
+        Ok((11, Some(index))) => rofi_delete(proxy, index, bookmarks),
         Ok((0, Some(index))) => rofi_open(&bookmarks[index].url),
         Err(_) => Ok(()),
         _ => panic!(),
@@ -111,9 +111,14 @@ fn main() -> Result<(), String> {
 
     if let Some(command) = cli.command {
         match command {
-            Commands::Rofi { host, db } => command_rofi(get_proxy(host, db)?),
-            Commands::Server {db} => server(db),
-            Commands::Add{host, db, url, description} => get_proxy(host, db)?.add(&url, &description, vec![])
+            Commands::Rofi { host, db } => command_rofi(&*get_proxy(host, db)?),
+            Commands::Server { db } => server(db),
+            Commands::Add {
+                host,
+                db,
+                url,
+                description,
+            } => get_proxy(host, db)?.add(&url, &description, vec![]),
         }?;
     } else {
         cmd.print_help().unwrap();
