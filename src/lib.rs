@@ -125,6 +125,5 @@ impl BookmarkProxy for RemoteProxy {
 pub fn establish_connection(url: &str) -> Result<SqliteConnection, String> {
     dotenv().ok();
 
-    SqliteConnection::establish(&url)
-        .map_err(|_| format!("Error connecting to {}", url))
+    SqliteConnection::establish(url).map_err(|_| format!("Error connecting to {}", url))
 }
