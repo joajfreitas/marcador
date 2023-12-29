@@ -29,20 +29,20 @@ async fn endpoint_delete(
     Ok(web::Json(0))
 }
 
-pub fn server() -> Result<(), String> {
+pub fn server(db: String) -> Result<(), String> {
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .unwrap()
-        .block_on(async_server())
+        .block_on(async_server(db))
         .map_err(|err| format!("{:?}", err))
 }
 
-async fn async_server() -> std::io::Result<()> {
-    HttpServer::new(|| {
+async fn async_server(db: String) -> std::io::Result<()> {
+    HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(State {
-                local_proxy: LocalProxy {},
+                local_proxy: LocalProxy::new(&db),
             }))
             .route("/marcador/list", web::get().to(endpoint_list))
             .route("/marcador/add", web::post().to(endpoint_add))

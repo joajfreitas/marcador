@@ -6,7 +6,6 @@ pub mod server;
 use diesel::prelude::*;
 use diesel::{delete, insert_into};
 use dotenvy::dotenv;
-use std::env;
 
 use serde::{Deserialize, Serialize};
 
@@ -29,12 +28,22 @@ pub trait BookmarkProxy {
     fn delete(&self, id: i32) -> Result<(), String>;
 }
 
-pub struct LocalProxy {}
+pub struct LocalProxy {
+    url: String,
+}
+
+impl LocalProxy {
+    pub fn new(url: &str) -> LocalProxy {
+        LocalProxy {
+            url: url.to_string(),
+        }
+    }
+}
 
 impl BookmarkProxy for LocalProxy {
     fn bookmarks(&self) -> Result<Vec<Bookmarks>, String> {
         use self::schema::bookmarks::dsl::*;
-        let conn = &mut establish_connection()?;
+        let conn = &mut establish_connection(&self.url)?;
         bookmarks
             .load(conn)
             .map_err(|_| "Failed to load bookmarks".to_string())
@@ -43,7 +52,7 @@ impl BookmarkProxy for LocalProxy {
     fn add(&self, link: &str, desc: &str, _tags: Vec<String>) -> Result<(), String> {
         use self::schema::bookmarks::dsl::*;
 
-        let conn = &mut establish_connection()?;
+        let conn = &mut establish_connection(&self.url)?;
         insert_into(bookmarks)
             .values((url.eq(link), description.eq(desc)))
             .execute(conn)
@@ -55,7 +64,7 @@ impl BookmarkProxy for LocalProxy {
     fn delete(&self, identifier: i32) -> Result<(), String> {
         use self::schema::bookmarks::dsl::*;
 
-        let connection = &mut establish_connection()?;
+        let connection = &mut establish_connection(&self.url)?;
         delete(bookmarks.filter(id.eq(identifier)))
             .execute(connection)
             .map_err(|_| "Failed to delete bookmark".to_string())?;
@@ -113,10 +122,9 @@ impl BookmarkProxy for RemoteProxy {
     }
 }
 
-pub fn establish_connection() -> Result<SqliteConnection, String> {
+pub fn establish_connection(url: &str) -> Result<SqliteConnection, String> {
     dotenv().ok();
 
-    let database_url = env::var("DATABASE_URL").map_err(|_| "DATABASE_URL must be set")?;
-    SqliteConnection::establish(&database_url)
-        .map_err(|_| format!("Error connecting to {}", database_url))
+    SqliteConnection::establish(&url)
+        .map_err(|_| format!("Error connecting to {}", url))
 }
