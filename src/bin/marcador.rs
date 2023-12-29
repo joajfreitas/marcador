@@ -4,7 +4,7 @@ use copypasta::{ClipboardContext, ClipboardProvider};
 use marcador::models::Bookmarks;
 use marcador::rofi;
 use marcador::server::server;
-use marcador::{BookmarkProxy, RemoteProxy};
+use marcador::{BookmarkProxy, LocalProxy, RemoteProxy};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -15,11 +15,26 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    Rofi { host: String },
-    Server {},
+    Rofi {
+        #[arg(long)]
+        host: Option<String>,
+        #[arg(long)]
+        db: Option<String>,
+    },
+    Server {
+        db: String
+    },
+    Add {
+        #[arg(long)]
+        host: Option<String>,
+        #[arg(long)]
+        db: Option<String>,
+        url: String,
+        description: String,
+    }
 }
 
-fn rofi_add(proxy: &RemoteProxy) -> Result<(), String> {
+fn rofi_add(proxy: &Box<dyn BookmarkProxy>) -> Result<(), String> {
     let mut ctx = ClipboardContext::new().map_err(|_| "Failed to create clipboard context")?;
     let content = ctx
         .get_contents()
@@ -41,7 +56,11 @@ fn rofi_add(proxy: &RemoteProxy) -> Result<(), String> {
     proxy.add(&s, &description, vec![])
 }
 
-fn rofi_delete(proxy: &RemoteProxy, index: usize, books: Vec<Bookmarks>) -> Result<(), String> {
+fn rofi_delete(
+    proxy: &Box<dyn BookmarkProxy>,
+    index: usize,
+    books: Vec<Bookmarks>,
+) -> Result<(), String> {
     proxy.delete(books[index].id)
 }
 
@@ -50,9 +69,18 @@ fn rofi_open(url: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn command_rofi(host: String) -> Result<(), String> {
-    let remote_proxy = RemoteProxy::new(&host);
-    let bookmarks = remote_proxy.bookmarks()?;
+fn get_proxy(host: Option<String>, db: Option<String>) -> Result<Box<dyn BookmarkProxy>, String> {
+    if db.is_some() {
+        Ok(Box::new(LocalProxy::new(&db.unwrap())))
+    } else if host.is_some() {
+        Ok(Box::new(RemoteProxy::new(&host.unwrap())))
+    } else {
+        Err("You must provide either a --host or --db flag".to_string())
+    }
+}
+
+fn command_rofi(proxy: Box<dyn BookmarkProxy>) -> Result<(), String> {
+    let bookmarks = proxy.bookmarks()?;
 
     let books = bookmarks
         .iter()
@@ -67,8 +95,8 @@ fn command_rofi(host: String) -> Result<(), String> {
         .run_index();
 
     match ret {
-        Ok((10, _)) => rofi_add(&remote_proxy),
-        Ok((11, Some(index))) => rofi_delete(&remote_proxy, index, bookmarks),
+        Ok((10, _)) => rofi_add(&proxy),
+        Ok((11, Some(index))) => rofi_delete(&proxy, index, bookmarks),
         Ok((0, Some(index))) => rofi_open(&bookmarks[index].url),
         Err(_) => Ok(()),
         _ => panic!(),
@@ -83,8 +111,9 @@ fn main() -> Result<(), String> {
 
     if let Some(command) = cli.command {
         match command {
-            Commands::Rofi { host } => command_rofi(host),
-            Commands::Server {} => server(),
+            Commands::Rofi { host, db } => command_rofi(get_proxy(host, db)?),
+            Commands::Server {db} => server(db),
+            Commands::Add{host, db, url, description} => get_proxy(host, db)?.add(&url, &description, vec![])
         }?;
     } else {
         cmd.print_help().unwrap();

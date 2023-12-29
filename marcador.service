@@ -1,0 +1,6 @@
+[Unit]
+Description=Marcador server
+[Service]
+ExecStart=/bin/bash -c "PATH=$PATH:~/bin:~/.local/bin exec marcador server /home/joaj/marcador.db"
+[Install]
+WantedBy=multi-user.target%  
