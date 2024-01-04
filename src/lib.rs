@@ -9,7 +9,7 @@ use dotenvy::dotenv;
 
 use serde::{Deserialize, Serialize};
 
-use models::Bookmarks;
+use models::{Bookmarks, Tags};
 
 #[derive(Serialize, Deserialize)]
 pub struct AddParams {
@@ -23,7 +23,7 @@ pub struct DeleteParams {
 }
 
 pub trait BookmarkProxy {
-    fn bookmarks(&self) -> Result<Vec<Bookmarks>, String>;
+    fn bookmarks(&self) -> Result<Vec<(Bookmarks, Vec<Tags>)>, String>;
     fn add(&self, url: &str, description: &str, tags: Vec<String>) -> Result<(), String>;
     fn delete(&self, id: i32) -> Result<(), String>;
 }
@@ -38,25 +38,109 @@ impl LocalProxy {
             url: url.to_string(),
         }
     }
+
+    //fn get_bookmark_by_url(&self, url: &str) -> Result<Bookmarks, String> {
+    //    use self::schema::bookmarks::dsl as bdsl;
+    //    let conn = &mut establish_connection(url)?;
+
+    //    bdsl::bookmarks
+    //        .filter(bdsl::url.eq(url))
+    //        .select(Bookmarks::as_select())
+    //        .get_result(conn)
+    //        .map_err(|err| format!("bs: {:?}", err))
+    //}
+
+    fn get_tags(&self, bookmark: &Bookmarks) -> Result<Vec<Tags>, String> {
+        use self::schema::bookmarks_tags::dsl as btdsl;
+        use self::schema::tags::dsl as tdsl;
+
+        let conn = &mut establish_connection(&self.url)?;
+        let tag_ids: Vec<i32> = btdsl::bookmarks_tags
+            .filter(btdsl::bookmark_id.eq(bookmark.id))
+            .select(btdsl::tag_id)
+            .get_results(conn)
+            .map_err(|err| format!("{:?}", err))?;
+
+        Ok(tag_ids
+            .iter()
+            .map(|id| {
+                tdsl::tags
+                    .filter(tdsl::id.eq(id))
+                    .select(Tags::as_select())
+                    .get_result(conn)
+                    .unwrap()
+            })
+            .collect())
+    }
 }
 
 impl BookmarkProxy for LocalProxy {
-    fn bookmarks(&self) -> Result<Vec<Bookmarks>, String> {
+    fn bookmarks(&self) -> Result<Vec<(Bookmarks, Vec<Tags>)>, String> {
         use self::schema::bookmarks::dsl::*;
         let conn = &mut establish_connection(&self.url)?;
-        bookmarks
+        let bs = bookmarks
             .load(conn)
-            .map_err(|_| "Failed to load bookmarks".to_string())
+            .map_err(|_| "Failed to load bookmarks".to_string())?;
+
+        Ok(bs
+            .iter()
+            .map(|bookmark: &Bookmarks| (bookmark.clone(), self.get_tags(bookmark).unwrap()))
+            .collect())
     }
 
-    fn add(&self, link: &str, desc: &str, _tags: Vec<String>) -> Result<(), String> {
-        use self::schema::bookmarks::dsl::*;
+    fn add(&self, url: &str, description: &str, tags: Vec<String>) -> Result<(), String> {
+        use self::schema::bookmarks::dsl as bdsl;
+        use self::schema::bookmarks_tags::dsl as btdsl;
+        use self::schema::tags::dsl as tdsl;
 
         let conn = &mut establish_connection(&self.url)?;
-        insert_into(bookmarks)
-            .values((url.eq(link), description.eq(desc)))
+
+        let bs: Vec<Bookmarks> = bdsl::bookmarks
+            .filter(bdsl::url.eq(url))
+            .select(Bookmarks::as_select())
+            .get_results(conn)
+            .map_err(|err| format!("bs: {:?}", err))?;
+
+        if bs.len() != 0 {
+            return Err("Bookmark already exists".to_string());
+        }
+
+        insert_into(bdsl::bookmarks)
+            .values((bdsl::url.eq(url), bdsl::description.eq(description)))
             .execute(conn)
             .map_err(|_| "Failed to add bookmark".to_string())?;
+
+        let bookmark_id: i32 = dbg!(bdsl::bookmarks
+            .filter(bdsl::url.eq(url))
+            .select(bdsl::id)
+            .get_result(conn)
+            .map_err(|err| format!("bookmark_id: {:?}", err))?);
+
+        for t in tags {
+            let ts: Vec<Tags> = tdsl::tags
+                .filter(tdsl::tag.eq(&t))
+                .select(Tags::as_select())
+                .get_results(conn)
+                .map_err(|err| format!("{:?}", err))?;
+            if ts.len() != 0 {
+                continue;
+            }
+            insert_into(tdsl::tags)
+                .values(tdsl::tag.eq(&t))
+                .execute(conn)
+                .map_err(|_| "Failed to add tag".to_string())?;
+
+            let tag = tdsl::tags
+                .filter(tdsl::tag.eq(&t))
+                .select(Tags::as_select())
+                .get_result(conn)
+                .map_err(|err| format!("{:?}", err))?;
+
+            insert_into(btdsl::bookmarks_tags)
+                .values((btdsl::bookmark_id.eq(bookmark_id), btdsl::tag_id.eq(tag.id)))
+                .execute(conn)
+                .map_err(|_| "Failed to add bookmark".to_string())?;
+        }
 
         Ok(())
     }
@@ -90,10 +174,10 @@ impl RemoteProxy {
 }
 
 impl BookmarkProxy for RemoteProxy {
-    fn bookmarks(&self) -> Result<Vec<Bookmarks>, String> {
+    fn bookmarks(&self) -> Result<Vec<(Bookmarks, Vec<Tags>)>, String> {
         Ok(reqwest::blocking::get(&self.list_endpoint)
             .map_err(|_| "Failed to get web resource")?
-            .json::<Vec<Bookmarks>>()
+            .json::<Vec<(Bookmarks, Vec<Tags>)>>()
             .map_err(|_| "Failed to parse json")?)
     }
 

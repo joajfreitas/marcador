@@ -1,7 +1,8 @@
 use clap::{CommandFactory, Parser, Subcommand};
 use copypasta::{ClipboardContext, ClipboardProvider};
+use itertools::intersperse;
 
-use marcador::models::Bookmarks;
+use marcador::models::{Bookmarks, Tags};
 use marcador::rofi;
 use marcador::server::server;
 use marcador::{BookmarkProxy, LocalProxy, RemoteProxy};
@@ -31,6 +32,13 @@ enum Commands {
         db: Option<String>,
         url: String,
         description: String,
+        tags: Vec<String>,
+    },
+    List {
+        #[arg(long)]
+        host: Option<String>,
+        #[arg(long)]
+        db: Option<String>,
     },
 }
 
@@ -59,9 +67,9 @@ fn rofi_add(proxy: &dyn BookmarkProxy) -> Result<(), String> {
 fn rofi_delete(
     proxy: &dyn BookmarkProxy,
     index: usize,
-    books: Vec<Bookmarks>,
+    books: Vec<(Bookmarks, Vec<Tags>)>,
 ) -> Result<(), String> {
-    proxy.delete(books[index].id)
+    proxy.delete(books[index].0.id)
 }
 
 fn rofi_open(url: &str) -> Result<(), String> {
@@ -84,7 +92,7 @@ fn command_rofi(proxy: &dyn BookmarkProxy) -> Result<(), String> {
 
     let books = bookmarks
         .iter()
-        .map(|x| x.url.to_string())
+        .map(|x| x.0.url.to_string())
         .collect::<Vec<String>>();
 
     let ret = rofi::Rofi::new(&books)
@@ -97,7 +105,7 @@ fn command_rofi(proxy: &dyn BookmarkProxy) -> Result<(), String> {
     match ret {
         Ok((10, _)) => rofi_add(proxy),
         Ok((11, Some(index))) => rofi_delete(proxy, index, bookmarks),
-        Ok((0, Some(index))) => rofi_open(&bookmarks[index].url),
+        Ok((0, Some(index))) => rofi_open(&bookmarks[index].0.url),
         Err(_) => Ok(()),
         _ => panic!(),
     }?;
@@ -118,7 +126,25 @@ fn main() -> Result<(), String> {
                 db,
                 url,
                 description,
-            } => get_proxy(host, db)?.add(&url, &description, vec![]),
+                tags,
+            } => get_proxy(host, db)?.add(&url, &description, tags),
+            Commands::List { host, db } => {
+                let bookmarks = get_proxy(host, db)?.bookmarks()?;
+                for (bookmark, tags) in &bookmarks {
+                    println!(
+                        "{}. {} - {} [{}]",
+                        bookmark.id,
+                        bookmark.url,
+                        bookmark.description,
+                        intersperse(
+                            tags.iter().map(|tag| format!("{}", tag.tag)),
+                            ", ".to_string()
+                        )
+                        .collect::<String>()
+                    );
+                }
+                Ok(())
+            }
         }?;
     } else {
         cmd.print_help().unwrap();
