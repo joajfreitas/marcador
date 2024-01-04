@@ -9,7 +9,7 @@ struct State {
     local_proxy: LocalProxy,
 }
 
-async fn endpoint_list(state: web::Data<State>) -> web::Json<Vec<Bookmarks>> {
+async fn endpoint_list(state: web::Data<State>) -> web::Json<Vec<(Bookmarks, Vec<Tags>)>> {
     web::Json(state.local_proxy.bookmarks().unwrap())
 }
 
