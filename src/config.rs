@@ -4,9 +4,45 @@ use serde::Deserialize;
 use std::fs;
 
 #[derive(Deserialize, Default)]
+pub struct ServerConfig {
+    pub db: Option<String>,
+    pub host: Option<String>,
+    pub port: Option<u16>,
+}
+
+impl ServerConfig {
+    pub fn set_db(&mut self, db: &Option<String>) {
+        if db.is_some() {
+            self.db = db.clone();
+        }
+    }
+    pub fn set_host(&mut self, host: &Option<String>) {
+        if host.is_some() {
+            self.host = host.clone();
+        }
+    }
+    pub fn set_port(&mut self, port: &Option<u16>) {
+        if port.is_some() {
+            self.port = *port;
+        }
+    }
+}
+
+#[derive(Deserialize)]
 pub struct Config {
     pub host: Option<String>,
     pub db: Option<String>,
+    pub server: Option<ServerConfig>,
+}
+
+impl Default for Config {
+    fn default() -> Config {
+        Config {
+            host: None,
+            db: None,
+            server: Some(ServerConfig::default()),
+        }
+    }
 }
 
 impl Config {
