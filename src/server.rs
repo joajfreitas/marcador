@@ -2,6 +2,7 @@ use actix_web::{web, App, HttpServer, Result};
 
 use crate::bookmark::Bookmark;
 
+use crate::config::ServerConfig;
 use crate::{AddParams, DeleteParams};
 use crate::{BookmarkProxy, LocalProxy};
 
@@ -29,16 +30,20 @@ async fn endpoint_delete(
     Ok(web::Json(0))
 }
 
-pub fn server(db: String) -> Result<(), String> {
+pub fn server(config: ServerConfig) -> Result<(), String> {
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .unwrap()
-        .block_on(async_server(db))
+        .block_on(async_server(
+            config.db.ok_or("Expected db path")?,
+            config.host.ok_or("Expected hostname")?,
+            config.port.ok_or("Expected port")?,
+        ))
         .map_err(|err| format!("{:?}", err))
 }
 
-async fn async_server(db: String) -> std::io::Result<()> {
+async fn async_server(db: String, host: String, port: u16) -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(State {
@@ -48,7 +53,7 @@ async fn async_server(db: String) -> std::io::Result<()> {
             .route("/marcador/add", web::post().to(endpoint_add))
             .route("/marcador/delete", web::post().to(endpoint_delete))
     })
-    .bind(("0.0.0.0", 8080))?
+    .bind((host, port))?
     .run()
     .await
 }
