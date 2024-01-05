@@ -1,4 +1,5 @@
 pub mod bookmark;
+pub mod config;
 pub mod models;
 pub mod rofi;
 pub mod rofi_interface;
@@ -7,12 +8,16 @@ pub mod server;
 
 use diesel::prelude::*;
 use diesel::{delete, insert_into};
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+
 use dotenvy::dotenv;
 
 use serde::{Deserialize, Serialize};
 
 use bookmark::Bookmark;
 use models::{Bookmarks, Tags};
+
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
 #[derive(Serialize, Deserialize)]
 pub struct AddParams {
@@ -32,32 +37,24 @@ pub trait BookmarkProxy {
 }
 
 pub struct LocalProxy {
-    url: String,
+    path: String,
 }
 
 impl LocalProxy {
-    pub fn new(url: &str) -> LocalProxy {
+    pub fn new(path: &str) -> LocalProxy {
+        let mut connection = establish_connection(path).unwrap();
+        connection.run_pending_migrations(MIGRATIONS).unwrap();
+
         LocalProxy {
-            url: url.to_string(),
+            path: path.to_string(),
         }
     }
-
-    //fn get_bookmark_by_url(&self, url: &str) -> Result<Bookmarks, String> {
-    //    use self::schema::bookmarks::dsl as bdsl;
-    //    let conn = &mut establish_connection(url)?;
-
-    //    bdsl::bookmarks
-    //        .filter(bdsl::url.eq(url))
-    //        .select(Bookmarks::as_select())
-    //        .get_result(conn)
-    //        .map_err(|err| format!("bs: {:?}", err))
-    //}
 
     fn get_tags(&self, bookmark: &Bookmarks) -> Result<Vec<Tags>, String> {
         use self::schema::bookmarks_tags::dsl as btdsl;
         use self::schema::tags::dsl as tdsl;
 
-        let conn = &mut establish_connection(&self.url)?;
+        let conn = &mut establish_connection(&self.path)?;
         let tag_ids: Vec<i32> = btdsl::bookmarks_tags
             .filter(btdsl::bookmark_id.eq(bookmark.id))
             .select(btdsl::tag_id)
@@ -80,7 +77,7 @@ impl LocalProxy {
 impl BookmarkProxy for LocalProxy {
     fn bookmarks(&self) -> Result<Vec<Bookmark>, String> {
         use self::schema::bookmarks::dsl::*;
-        let conn = &mut establish_connection(&self.url)?;
+        let conn = &mut establish_connection(&self.path)?;
         let bs = bookmarks
             .load(conn)
             .map_err(|_| "Failed to load bookmarks".to_string())?;
@@ -96,7 +93,7 @@ impl BookmarkProxy for LocalProxy {
         use self::schema::bookmarks_tags::dsl as btdsl;
         use self::schema::tags::dsl as tdsl;
 
-        let conn = &mut establish_connection(&self.url)?;
+        let conn = &mut establish_connection(&self.path)?;
 
         let bs: Vec<Bookmarks> = bdsl::bookmarks
             .filter(bdsl::url.eq(url))
@@ -113,11 +110,11 @@ impl BookmarkProxy for LocalProxy {
             .execute(conn)
             .map_err(|_| "Failed to add bookmark".to_string())?;
 
-        let bookmark_id: i32 = dbg!(bdsl::bookmarks
+        let bookmark_id: i32 = bdsl::bookmarks
             .filter(bdsl::url.eq(url))
             .select(bdsl::id)
             .get_result(conn)
-            .map_err(|err| format!("bookmark_id: {:?}", err))?);
+            .map_err(|err| format!("bookmark_id: {:?}", err))?;
 
         for t in tags {
             let ts: Vec<Tags> = tdsl::tags
@@ -151,7 +148,7 @@ impl BookmarkProxy for LocalProxy {
     fn delete(&self, identifier: i32) -> Result<(), String> {
         use self::schema::bookmarks::dsl::*;
 
-        let connection = &mut establish_connection(&self.url)?;
+        let connection = &mut establish_connection(&self.path)?;
         delete(bookmarks.filter(id.eq(identifier)))
             .execute(connection)
             .map_err(|_| "Failed to delete bookmark".to_string())?;

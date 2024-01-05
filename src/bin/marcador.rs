@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 
+use marcador::config::Config;
 use marcador::rofi_interface::command_rofi;
 use marcador::{BookmarkProxy, LocalProxy, RemoteProxy};
 
@@ -38,7 +39,12 @@ fn get_proxy(host: Option<String>, db: Option<String>) -> Result<Box<dyn Bookmar
 fn main() -> Result<(), String> {
     let cli = Cli::parse();
 
-    let proxy = get_proxy(cli.host, cli.db)?;
+    let mut config = Config::read().ok_or("Failed to read config".to_string())?;
+
+    config.set_host(&cli.host);
+    config.set_db(&cli.db);
+
+    let proxy = get_proxy(config.host, config.db)?;
     match cli.command {
         Commands::Rofi => command_rofi(&*proxy),
         Commands::Add {

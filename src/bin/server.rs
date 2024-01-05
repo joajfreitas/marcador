@@ -1,5 +1,4 @@
 use clap::Parser;
-
 use marcador::server::server;
 
 #[derive(Parser)]
@@ -10,6 +9,7 @@ struct Cli {
 
 fn main() -> Result<(), String> {
     let cli = Cli::parse();
+
     server(cli.db)?;
 
     Ok(())
