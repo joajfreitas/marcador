@@ -25,17 +25,26 @@ impl fmt::Display for Bookmark {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{}. {}\n  {} {}\n  {} {}",
+            "{}. {}\n  {} {}",
             self.bookmark.id.to_string().cyan(),
             self.bookmark.description.to_string().green(),
             ">".red(),
-            self.bookmark.url.to_string().yellow(),
-            "#".red(),
-            intersperse(
-                self.tags.iter().map(|tag| tag.tag.blue().to_string()),
-                ",".blue().to_string()
+            self.bookmark.url.to_string().yellow()
+        )?;
+
+        if !self.tags.is_empty() {
+            write!(
+                f,
+                "\n{} {}",
+                "#".red(),
+                intersperse(
+                    self.tags.iter().map(|tag| tag.tag.blue().to_string()),
+                    ",".blue().to_string()
+                )
+                .collect::<String>()
             )
-            .collect::<String>()
-        )
+        } else {
+            Ok(())
+        }
     }
 }
