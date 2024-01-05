@@ -16,6 +16,6 @@ reqwest = { version = "0.11", features = ["blocking", "json"]}
 clap = { version = "4", features = ["derive"]}
 copypasta = "0.10"
 tokio = "1.35"
-#rofi = { git = "ssh://git@github.com/joajfreitas/rofi-rs.git"}
 thiserror = "1.0.19"
 itertools = "0.12"
+colored="2.1.0"

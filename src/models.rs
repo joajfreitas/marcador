@@ -11,7 +11,7 @@ pub struct Bookmarks {
     pub description: String,
 }
 
-#[derive(Queryable, Selectable, Serialize, Deserialize, Debug)]
+#[derive(Queryable, Selectable, Serialize, Deserialize, Debug, Clone)]
 #[diesel(table_name = crate::schema::tags)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Tags {

@@ -1,6 +1,6 @@
 use actix_web::{web, App, HttpServer, Result};
 
-use crate::models::*;
+use crate::bookmark::Bookmark;
 
 use crate::{AddParams, DeleteParams};
 use crate::{BookmarkProxy, LocalProxy};
@@ -9,7 +9,7 @@ struct State {
     local_proxy: LocalProxy,
 }
 
-async fn endpoint_list(state: web::Data<State>) -> web::Json<Vec<(Bookmarks, Vec<Tags>)>> {
+async fn endpoint_list(state: web::Data<State>) -> web::Json<Vec<Bookmark>> {
     web::Json(state.local_proxy.bookmarks().unwrap())
 }
 

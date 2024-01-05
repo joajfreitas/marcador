@@ -1,5 +1,7 @@
+pub mod bookmark;
 pub mod models;
 pub mod rofi;
+pub mod rofi_interface;
 pub mod schema;
 pub mod server;
 
@@ -9,6 +11,7 @@ use dotenvy::dotenv;
 
 use serde::{Deserialize, Serialize};
 
+use bookmark::Bookmark;
 use models::{Bookmarks, Tags};
 
 #[derive(Serialize, Deserialize)]
@@ -23,7 +26,7 @@ pub struct DeleteParams {
 }
 
 pub trait BookmarkProxy {
-    fn bookmarks(&self) -> Result<Vec<(Bookmarks, Vec<Tags>)>, String>;
+    fn bookmarks(&self) -> Result<Vec<Bookmark>, String>;
     fn add(&self, url: &str, description: &str, tags: Vec<String>) -> Result<(), String>;
     fn delete(&self, id: i32) -> Result<(), String>;
 }
@@ -75,7 +78,7 @@ impl LocalProxy {
 }
 
 impl BookmarkProxy for LocalProxy {
-    fn bookmarks(&self) -> Result<Vec<(Bookmarks, Vec<Tags>)>, String> {
+    fn bookmarks(&self) -> Result<Vec<Bookmark>, String> {
         use self::schema::bookmarks::dsl::*;
         let conn = &mut establish_connection(&self.url)?;
         let bs = bookmarks
@@ -84,7 +87,7 @@ impl BookmarkProxy for LocalProxy {
 
         Ok(bs
             .iter()
-            .map(|bookmark: &Bookmarks| (bookmark.clone(), self.get_tags(bookmark).unwrap()))
+            .map(|bookmark: &Bookmarks| Bookmark::new(bookmark, &self.get_tags(bookmark).unwrap()))
             .collect())
     }
 
@@ -101,7 +104,7 @@ impl BookmarkProxy for LocalProxy {
             .get_results(conn)
             .map_err(|err| format!("bs: {:?}", err))?;
 
-        if bs.len() != 0 {
+        if !bs.is_empty() {
             return Err("Bookmark already exists".to_string());
         }
 
@@ -122,7 +125,7 @@ impl BookmarkProxy for LocalProxy {
                 .select(Tags::as_select())
                 .get_results(conn)
                 .map_err(|err| format!("{:?}", err))?;
-            if ts.len() != 0 {
+            if !ts.is_empty() {
                 continue;
             }
             insert_into(tdsl::tags)
@@ -174,10 +177,10 @@ impl RemoteProxy {
 }
 
 impl BookmarkProxy for RemoteProxy {
-    fn bookmarks(&self) -> Result<Vec<(Bookmarks, Vec<Tags>)>, String> {
+    fn bookmarks(&self) -> Result<Vec<Bookmark>, String> {
         Ok(reqwest::blocking::get(&self.list_endpoint)
             .map_err(|_| "Failed to get web resource")?
-            .json::<Vec<(Bookmarks, Vec<Tags>)>>()
+            .json::<Vec<Bookmark>>()
             .map_err(|_| "Failed to parse json")?)
     }
 
