@@ -31,27 +31,48 @@ async fn endpoint_delete(
 }
 
 pub fn server(config: ServerConfig) -> Result<(), String> {
+    println!(
+        "Running server {}:{}{}",
+        config.get_host(),
+        config.get_port(),
+        config.get_root()
+    );
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .unwrap()
         .block_on(async_server(
             config.db.ok_or("Expected db path")?,
-            config.host.ok_or("Expected hostname")?,
-            config.port.ok_or("Expected port")?,
+            config.host.unwrap_or("127.0.0.1".to_string()),
+            config.port.unwrap_or(8080),
+            config.root.unwrap_or("/".to_string()),
         ))
         .map_err(|err| format!("{:?}", err))
 }
 
-async fn async_server(db: String, host: String, port: u16) -> std::io::Result<()> {
+async fn async_server(db: String, host: String, port: u16, root: String) -> std::io::Result<()> {
+    let (list_endpoint, add_endpoint, delete_endpoint) = if root == "/" {
+        (
+            "/list".to_string(),
+            "/add".to_string(),
+            "/delete".to_string(),
+        )
+    } else {
+        (
+            root.clone() + "/list",
+            root.clone() + "/add",
+            root + "/delete",
+        )
+    };
+
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(State {
                 local_proxy: LocalProxy::new(&db),
             }))
-            .route("/marcador/list", web::get().to(endpoint_list))
-            .route("/marcador/add", web::post().to(endpoint_add))
-            .route("/marcador/delete", web::post().to(endpoint_delete))
+            .route(&list_endpoint, web::get().to(endpoint_list))
+            .route(&add_endpoint, web::post().to(endpoint_add))
+            .route(&delete_endpoint, web::post().to(endpoint_delete))
     })
     .bind((host, port))?
     .run()

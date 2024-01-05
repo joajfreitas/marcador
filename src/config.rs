@@ -8,6 +8,7 @@ pub struct ServerConfig {
     pub db: Option<String>,
     pub host: Option<String>,
     pub port: Option<u16>,
+    pub root: Option<String>,
 }
 
 impl ServerConfig {
@@ -21,9 +22,40 @@ impl ServerConfig {
             self.host = host.clone();
         }
     }
+
+    pub fn get_host(&self) -> String {
+        if let Some(host) = &self.host {
+            host.clone()
+        } else {
+            "127.0.0.1".to_string()
+        }
+    }
+
     pub fn set_port(&mut self, port: &Option<u16>) {
         if port.is_some() {
             self.port = *port;
+        }
+    }
+
+    pub fn get_port(&self) -> u16 {
+        if let Some(port) = self.port {
+            port
+        } else {
+            8080
+        }
+    }
+
+    pub fn set_root(&mut self, root: &Option<String>) {
+        if root.is_some() {
+            self.root = root.clone();
+        }
+    }
+
+    pub fn get_root(&self) -> String {
+        if let Some(root) = &self.root {
+            root.clone()
+        } else {
+            "/".to_string()
         }
     }
 }
