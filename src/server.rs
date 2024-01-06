@@ -1,10 +1,24 @@
 use actix_web::{web, App, HttpServer, Result};
+use clap::Parser;
 
 use crate::bookmark::Bookmark;
 
-use crate::config::ServerConfig;
+use crate::config::{Config, ServerConfig};
 use crate::{AddParams, DeleteParams};
 use crate::{BookmarkProxy, LocalProxy};
+
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+pub struct Cli {
+    #[arg(long)]
+    pub db: Option<String>,
+    #[arg(long)]
+    pub host: Option<String>,
+    #[arg(long)]
+    pub port: Option<u16>,
+    #[arg(long)]
+    pub root: Option<String>,
+}
 
 struct State {
     local_proxy: LocalProxy,
@@ -14,12 +28,15 @@ async fn endpoint_list(state: web::Data<State>) -> web::Json<Vec<Bookmark>> {
     web::Json(state.local_proxy.bookmarks().unwrap())
 }
 
-async fn endpoint_add(state: web::Data<State>, info: web::Json<AddParams>) -> Result<String> {
+async fn endpoint_add(
+    state: web::Data<State>,
+    info: web::Json<AddParams>,
+) -> Result<web::Json<i32>> {
     state
         .local_proxy
         .add(&info.url, &info.description, vec![])
         .unwrap();
-    Ok("nice".to_string())
+    Ok(web::Json(0))
 }
 
 async fn endpoint_delete(
@@ -30,22 +47,37 @@ async fn endpoint_delete(
     Ok(web::Json(0))
 }
 
-pub fn server(config: ServerConfig) -> Result<(), String> {
+pub fn server() -> Result<(), String> {
+    let cli = Cli::parse();
+
+    let config = Config::read().ok_or("Failed to read config".to_string())?;
+
+    let mut server_config = if let Some(server_config) = config.server {
+        server_config
+    } else {
+        ServerConfig::default()
+    };
+
+    server_config.set_db(&cli.db);
+    server_config.set_host(&cli.host);
+    server_config.set_port(&cli.port);
+    server_config.set_root(&cli.root);
+
     println!(
         "Running server {}:{}{}",
-        config.get_host(),
-        config.get_port(),
-        config.get_root()
+        server_config.get_host(),
+        server_config.get_port(),
+        server_config.get_root()
     );
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .unwrap()
         .block_on(async_server(
-            config.db.ok_or("Expected db path")?,
-            config.host.unwrap_or("127.0.0.1".to_string()),
-            config.port.unwrap_or(8080),
-            config.root.unwrap_or("/".to_string()),
+            server_config.db.ok_or("Expected db path")?,
+            server_config.host.unwrap_or("127.0.0.1".to_string()),
+            server_config.port.unwrap_or(8080),
+            server_config.root.unwrap_or("/".to_string()),
         ))
         .map_err(|err| format!("{:?}", err))
 }
