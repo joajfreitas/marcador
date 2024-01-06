@@ -11,13 +11,10 @@
 // You should have received a copy of the GNU General Public License along with this
 // program. If not, see <https://www.gnu.org/licenses/>.
 
-use clap::Parser;
+use crate::bookmark::Bookmark;
 
-use marcador::server::server;
-use marcador::server::Cli;
-
-fn main() -> Result<(), String> {
-    let cli = Cli::parse();
-
-    server(cli)
+pub trait BookmarkProxy {
+    fn bookmarks(&self) -> Result<Vec<Bookmark>, String>;
+    fn add(&self, url: &str, description: &str, tags: Vec<String>) -> Result<(), String>;
+    fn delete(&self, id: i32) -> Result<(), String>;
 }
