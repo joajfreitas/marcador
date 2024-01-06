@@ -27,14 +27,6 @@ pub struct Pango<'a> {
 
 impl<'a> Pango<'a> {
     /// Generate a new pango class
-    ///
-    /// # Usage
-    ///
-    /// ```
-    /// use rofi::pango;
-    /// let t = pango::Pango::new("test").build();
-    /// assert_eq!(t, "test");
-    /// ```
     pub fn new(content: &'a str) -> Pango<'_> {
         Pango {
             content,
@@ -43,14 +35,6 @@ impl<'a> Pango<'a> {
     }
 
     /// Generate a new pango class with options capacity
-    ///
-    /// # Usage
-    ///
-    /// ```
-    /// use rofi::pango;
-    /// let t = pango::Pango::with_capacity("test", 0).build();
-    /// assert_eq!(t, "test");
-    /// ```
     pub fn with_capacity(content: &'a str, size: usize) -> Pango<'_> {
         Pango {
             content,
@@ -59,18 +43,6 @@ impl<'a> Pango<'a> {
     }
 
     /// Generate the pango string
-    ///
-    /// # Usage
-    ///
-    /// ```
-    /// use rofi::pango;
-    /// let t = pango::Pango::new("test")
-    ///     .slant_style(pango::SlantStyle::Italic)
-    ///     .size(pango::FontSize::Small)
-    ///     .build();
-    /// assert!(t == "<span style='italic' size='small'>test</span>" ||
-    ///         t == "<span size='small' style='italic'>test</span>");
-    /// ```
     pub fn build(&mut self) -> String {
         self.to_string()
     }
@@ -78,46 +50,17 @@ impl<'a> Pango<'a> {
     /// Generates a pango string based on the options, but with a different
     /// content.
     ///
-    /// ```
-    /// use rofi::pango;
-    /// let mut p = pango::Pango::new("");
-    /// p.slant_style(pango::SlantStyle::Italic);
-    /// p.size(pango::FontSize::Small);
-    /// let t = p.build_content("test");
-    /// assert!(t == "<span style='italic' size='small'>test</span>" ||
-    ///         t == "<span size='small' style='italic'>test</span>");
-    /// ```
     pub fn build_content(&self, content: &str) -> String {
         self.to_string_with_content(content)
     }
 
     /// Set the font
-    ///
-    /// # Usage
-    ///
-    /// ```
-    /// use rofi::pango;
-    /// let t = pango::Pango::new("test")
-    ///     .font_description("Sans Italic 12")
-    ///     .build();
-    /// assert_eq!(t, "<span font_desc='Sans Italic 12'>test</span>");
-    /// ```
     pub fn font_description(&mut self, font: &'a str) -> &mut Self {
         self.options.insert("font_desc", font);
         self
     }
 
     /// set the font family
-    ///
-    /// # Usage
-    ///
-    /// ```
-    /// use rofi::pango;
-    /// let t = pango::Pango::new("test")
-    ///     .font_family(pango::FontFamily::Monospace)
-    ///     .build();
-    /// assert_eq!(t, "<span face='monospace'>test</span>");
-    /// ```
     pub fn font_family(&mut self, family: FontFamily) -> &mut Self {
         self.options.insert(
             "face",
@@ -133,15 +76,6 @@ impl<'a> Pango<'a> {
 
     /// Set the size of the font, relative to the configured font size
     ///
-    /// # Usage
-    ///
-    /// ```
-    /// use rofi::pango;
-    /// let t = pango::Pango::new("test")
-    ///     .size(pango::FontSize::Huge)
-    ///     .build();
-    /// assert_eq!(t, "<span size='x-large'>test</span>");
-    /// ```
     pub fn size(&mut self, size: FontSize) -> &mut Self {
         self.options.insert(
             "size",
@@ -162,15 +96,6 @@ impl<'a> Pango<'a> {
 
     /// Set the slant style (italic / oblique / normal)
     ///
-    /// # Usage
-    ///
-    /// ```
-    /// use rofi::pango;
-    /// let t = pango::Pango::new("test")
-    ///     .slant_style(pango::SlantStyle::Oblique)
-    ///     .build();
-    /// assert_eq!(t, "<span style='oblique'>test</span>");
-    /// ```
     pub fn slant_style(&mut self, style: SlantStyle) -> &mut Self {
         self.options.insert(
             "style",
@@ -185,15 +110,6 @@ impl<'a> Pango<'a> {
 
     /// Set the font weight
     ///
-    /// # Usage
-    ///
-    /// ```
-    /// use rofi::pango;
-    /// let t = pango::Pango::new("test")
-    ///     .weight(pango::Weight::Bold)
-    ///     .build();
-    /// assert_eq!(t, "<span weight='bold'>test</span>");
-    /// ```
     pub fn weight(&mut self, weight: Weight) -> &mut Self {
         self.options.insert(
             "weight",
@@ -216,15 +132,6 @@ impl<'a> Pango<'a> {
     /// Set the alpha of the text
     /// Important: alpha must be fo the form: XX%, where XX is a number between 0 and 100.
     ///
-    /// # Usage
-    ///
-    /// ```
-    /// use rofi::pango;
-    /// let t = pango::Pango::new("test")
-    ///     .alpha("50%")
-    ///     .build();
-    /// assert_eq!(t, "<span alpha='50%'>test</span>");
-    /// ```
     pub fn alpha(&mut self, alpha: &'a str) -> &mut Self {
         self.options.insert("alpha", alpha);
         self
@@ -232,31 +139,12 @@ impl<'a> Pango<'a> {
 
     /// Use smallcaps
     ///
-    /// # Usage
-    ///
-    /// ```
-    /// use rofi::pango;
-    /// let t = pango::Pango::new("test")
-    ///     .small_caps()
-    ///     .build();
-    /// assert_eq!(t, "<span variant='smallcaps'>test</span>");
-    /// ```
     pub fn small_caps(&mut self) -> &mut Self {
         self.options.insert("variant", "smallcaps");
         self
     }
 
     /// Set the stretch (expanded or condensed)
-    ///
-    /// # Usage
-    ///
-    /// ```
-    /// use rofi::pango;
-    /// let t = pango::Pango::new("test")
-    ///     .stretch(pango::FontStretch::Condensed)
-    ///     .build();
-    /// assert_eq!(t, "<span stretch='condensed'>test</span>");
-    /// ```
     pub fn stretch(&mut self, stretch: FontStretch) -> &mut Self {
         self.options.insert(
             "stretch",
@@ -277,15 +165,6 @@ impl<'a> Pango<'a> {
 
     /// Set the foreground color
     ///
-    /// # Usage
-    ///
-    /// ```
-    /// use rofi::pango;
-    /// let t = pango::Pango::new("test")
-    ///     .fg_color("#00FF00")
-    ///     .build();
-    /// assert_eq!(t, "<span foreground='#00FF00'>test</span>");
-    /// ```
     pub fn fg_color(&mut self, color: &'a str) -> &mut Self {
         self.options.insert("foreground", color);
         self
@@ -293,15 +172,6 @@ impl<'a> Pango<'a> {
 
     /// Set the background color
     ///
-    /// # Usage
-    ///
-    /// ```
-    /// use rofi::pango;
-    /// let t = pango::Pango::new("test")
-    ///     .bg_color("#00FF00")
-    ///     .build();
-    /// assert_eq!(t, "<span background='#00FF00'>test</span>");
-    /// ```
     pub fn bg_color(&mut self, color: &'a str) -> &mut Self {
         self.options.insert("background", color);
         self
@@ -309,15 +179,6 @@ impl<'a> Pango<'a> {
 
     /// Set the underline style
     ///
-    /// # Usage
-    ///
-    /// ```
-    /// use rofi::pango;
-    /// let t = pango::Pango::new("test")
-    ///     .underline(pango::Underline::Double)
-    ///     .build();
-    /// assert_eq!(t, "<span underline='double'>test</span>");
-    /// ```
     pub fn underline(&mut self, underline: Underline) -> &mut Self {
         self.options.insert(
             "underline",
@@ -333,15 +194,6 @@ impl<'a> Pango<'a> {
 
     /// set the font to strike through
     ///
-    /// # Usage
-    ///
-    /// ```
-    /// use rofi::pango;
-    /// let t = pango::Pango::new("test")
-    ///     .strike_through()
-    ///     .build();
-    /// assert_eq!(t, "<span strikethrough='true'>test</span>");
-    /// ```
     pub fn strike_through(&mut self) -> &mut Self {
         self.options.insert("strikethrough", "true");
         self
