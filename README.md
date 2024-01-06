@@ -29,6 +29,7 @@ Options:
 
 ![Usage](./assets/usage.png)
 
+
 ### Configuration
 
 The marcador database location can be configured in `$XDG_CONFIG_HOME/marcador/marcador.toml`.
@@ -86,4 +87,4 @@ root = "/"
 This project is heavily inspired by [buku](https://github.com/jarun/Buku)
 
 ## Screenshots
-![bookmarks screenshot](https://raw.githubusercontent.com/joajfreitas/marcador/master/showcase_pretty.png)
+![Rofi](./assets/rofi.png)
