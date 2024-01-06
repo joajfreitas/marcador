@@ -16,9 +16,9 @@ use clap::Parser;
 
 use crate::bookmark::Bookmark;
 
-use crate::config::{Config, ServerConfig};
-use crate::{AddParams, DeleteParams};
 use crate::{BookmarkProxy, LocalProxy};
+use crate::config::{Config, ServerConfig};
+use crate::remote_proxy::{AddParams, DeleteParams};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -60,9 +60,7 @@ async fn endpoint_delete(
     Ok(web::Json(0))
 }
 
-pub fn server() -> Result<(), String> {
-    let cli = Cli::parse();
-
+pub fn server(cli: Cli) -> Result<(), String> {
     let config = Config::read().ok_or("Failed to read config".to_string())?;
 
     let mut server_config = if let Some(server_config) = config.server {
