@@ -1,5 +1,7 @@
-use marcador::marcador;
+use clap::Parser;
+use marcador::{marcador, Cli};
 
 fn main() -> Result<(), String> {
-    marcador()
+    let cli = Cli::parse();
+    marcador(cli)
 }

@@ -232,9 +232,11 @@ pub fn establish_connection(url: &str) -> Result<SqliteConnection, String> {
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
-struct Cli {
+pub struct Cli {
+    /// Hostname of marcador server
     #[arg(long)]
     host: Option<String>,
+    /// Bookmark batabase path
     #[arg(long)]
     db: Option<String>,
     #[command(subcommand)]
@@ -243,13 +245,21 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Rofi interface
     Rofi,
+    /// Add a new bookmark
     Add {
+        /// Bookmark url
         url: String,
+        /// Bookmark description
         description: String,
+        /// List of bookmark tags
         tags: Vec<String>,
     },
+    /// List bookmarks
     List,
+    /// Delete bookmark by id
+    Delete { index: i32 },
 }
 
 fn get_proxy(host: Option<String>, db: Option<String>) -> Result<Box<dyn BookmarkProxy>, String> {
@@ -262,9 +272,7 @@ fn get_proxy(host: Option<String>, db: Option<String>) -> Result<Box<dyn Bookmar
     }
 }
 
-pub fn marcador() -> Result<(), String> {
-    let cli = Cli::parse();
-
+pub fn marcador(cli: Cli) -> Result<(), String> {
     let mut config = Config::read().ok_or("Failed to read config".to_string())?;
 
     config.set_host(&cli.host);
@@ -284,6 +292,7 @@ pub fn marcador() -> Result<(), String> {
             }
             Ok(())
         }
+        Commands::Delete { index } => proxy.delete(index),
     }?;
 
     Ok(())
@@ -293,6 +302,6 @@ pub fn marcador() -> Result<(), String> {
 mod tests {
     #[test]
     fn test1() {
-        assert_eq!(1,1);
+        assert_eq!(1, 1);
     }
 }
