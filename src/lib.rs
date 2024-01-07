@@ -16,19 +16,19 @@ pub mod bookmark_proxy;
 pub mod config;
 pub mod local_proxy;
 pub mod models;
+pub mod remote_proxy;
 pub mod rofi;
 pub mod rofi_interface;
 pub mod schema;
 pub mod server;
-pub mod remote_proxy;
 
 use clap::{Parser, Subcommand};
 
 use bookmark_proxy::BookmarkProxy;
 use config::Config;
-use rofi_interface::command_rofi;
-use local_proxy::LocalProxy;
+use local_proxy::{edit_bookmark, LocalProxy};
 use remote_proxy::RemoteProxy;
+use rofi_interface::command_rofi;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -95,7 +95,7 @@ pub fn marcador(cli: Cli) -> Result<(), String> {
             Ok(())
         }
         Commands::Delete { index } => proxy.delete(index),
-        Commands::Edit { index: _ } => Ok(()), /*proxy.edit(index),*/
+        Commands::Edit { index } => {edit_bookmark(&*proxy, index); Ok(())},
     }?;
 
     Ok(())

@@ -17,9 +17,18 @@ use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
 use dotenvy::dotenv;
 
+use itertools::intersperse;
+
+use std::{
+    env::{temp_dir, var},
+    fs::File,
+    io::{Read, Write},
+    process::Command,
+};
+
 use crate::bookmark::Bookmark;
 use crate::bookmark_proxy::BookmarkProxy;
-use crate::models::{Bookmarks, Tags};
+use crate::models::{Bookmarks, Tags, BookmarkTags};
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
@@ -65,9 +74,65 @@ impl LocalProxy {
             })
             .collect())
     }
+
+    fn insert_tags(&self, id: i32, tags: &Vec<String>) -> Result<(), String> {
+        use crate::schema::bookmarks_tags::dsl as btdsl;
+        use crate::schema::tags::dsl as tdsl;
+
+        let conn = &mut establish_connection(&self.path)?;
+
+        for t in tags {
+            let ts: Vec<Tags> = tdsl::tags
+                .filter(tdsl::tag.eq(t))
+                .select(Tags::as_select())
+                .get_results(conn)
+                .map_err(|err| format!("{:?}", err))?;
+            if ts.is_empty() {
+                insert_into(tdsl::tags)
+                    .values(tdsl::tag.eq(t))
+                    .execute(conn)
+                    .map_err(|_| "Failed to add tag".to_string())?;
+            }
+
+            let tag = tdsl::tags
+                .filter(tdsl::tag.eq(t))
+                .select(Tags::as_select())
+                .get_result(conn)
+                .map_err(|err| format!("{:?}", err))?;
+
+            let bts: Vec<BookmarkTags> = btdsl::bookmarks_tags
+                .filter(btdsl::tag_id.eq(tag.id))
+                .filter(btdsl::bookmark_id.eq(id))
+                .select(BookmarkTags::as_select())
+                .get_results(conn)
+                .map_err(|err| format!("{:?}", err))?;
+
+            if bts.is_empty() {
+                insert_into(btdsl::bookmarks_tags)
+                    .values((btdsl::bookmark_id.eq(id), btdsl::tag_id.eq(tag.id)))
+                    .execute(conn)
+                    .map_err(|_| "Failed to add bookmark".to_string())?;
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl BookmarkProxy for LocalProxy {
+    fn bookmark(&self, id: i32) -> Result<Bookmark, String> {
+        use crate::schema::bookmarks::dsl as bdsl;
+
+        let conn = &mut establish_connection(&self.path)?;
+        let bookmark = bdsl::bookmarks
+            .filter(bdsl::id.eq(id))
+            .select(Bookmarks::as_select())
+            .get_result(conn)
+            .map_err(|_| "Failed to load bookmark".to_string())?;
+
+        Ok(Bookmark::new(&bookmark, &self.get_tags(&bookmark).unwrap()))
+    }
+
     fn bookmarks(&self) -> Result<Vec<Bookmark>, String> {
         use crate::schema::bookmarks::dsl::*;
 
@@ -84,8 +149,6 @@ impl BookmarkProxy for LocalProxy {
 
     fn add(&self, url: &str, description: &str, tags: Vec<String>) -> Result<(), String> {
         use crate::schema::bookmarks::dsl as bdsl;
-        use crate::schema::bookmarks_tags::dsl as btdsl;
-        use crate::schema::tags::dsl as tdsl;
 
         let conn = &mut establish_connection(&self.path)?;
 
@@ -110,31 +173,7 @@ impl BookmarkProxy for LocalProxy {
             .get_result(conn)
             .map_err(|err| format!("bookmark_id: {:?}", err))?;
 
-        for t in tags {
-            let ts: Vec<Tags> = tdsl::tags
-                .filter(tdsl::tag.eq(&t))
-                .select(Tags::as_select())
-                .get_results(conn)
-                .map_err(|err| format!("{:?}", err))?;
-            if !ts.is_empty() {
-                continue;
-            }
-            insert_into(tdsl::tags)
-                .values(tdsl::tag.eq(&t))
-                .execute(conn)
-                .map_err(|_| "Failed to add tag".to_string())?;
-
-            let tag = tdsl::tags
-                .filter(tdsl::tag.eq(&t))
-                .select(Tags::as_select())
-                .get_result(conn)
-                .map_err(|err| format!("{:?}", err))?;
-
-            insert_into(btdsl::bookmarks_tags)
-                .values((btdsl::bookmark_id.eq(bookmark_id), btdsl::tag_id.eq(tag.id)))
-                .execute(conn)
-                .map_err(|_| "Failed to add bookmark".to_string())?;
-        }
+        self.insert_tags(bookmark_id, &tags).unwrap();
 
         Ok(())
     }
@@ -148,5 +187,99 @@ impl BookmarkProxy for LocalProxy {
             .map_err(|_| "Failed to delete bookmark".to_string())?;
 
         Ok(())
+    }
+
+    fn update_description(&self, id: i32, description: &str) -> Result<(), String> {
+        use crate::schema::bookmarks::dsl as bdsl;
+
+        let conn = &mut establish_connection(&self.path)?;
+        diesel::update(bdsl::bookmarks)
+            .filter(bdsl::id.eq(id))
+            .set(bdsl::description.eq(description))
+            .execute(conn)
+            .map_err(|_| "Failed to update description".to_string())?;
+
+        Ok(())
+    }
+
+    fn update_url(&self, id: i32, url: &str) -> Result<(), String> {
+        use crate::schema::bookmarks::dsl as bdsl;
+
+        let conn = &mut establish_connection(&self.path)?;
+        diesel::update(bdsl::bookmarks)
+            .filter(bdsl::id.eq(id))
+            .set(bdsl::url.eq(url))
+            .execute(conn)
+            .map_err(|_| "Failed to update description".to_string())?;
+
+        Ok(())
+    }
+
+    fn update_tags(&self, id: i32, tags: &[String]) -> Result<(), String> {
+        use crate::schema::bookmarks_tags::dsl as btdsl;
+
+        let conn = &mut establish_connection(&self.path)?;
+
+        diesel::delete(btdsl::bookmarks_tags)
+            .filter(btdsl::bookmark_id.eq(id))
+            .execute(conn)
+            .map_err(|err| format!("{}", err))?;
+
+        self.insert_tags(id, &tags.to_vec())?;
+        Ok(())
+    }
+}
+
+pub fn edit_bookmark(proxy: &dyn BookmarkProxy, id: i32) {
+    let editor = var("EDITOR").unwrap();
+    let mut file_path = temp_dir();
+    file_path.push("editable");
+    let mut file = File::create(&file_path).expect("Could not create file");
+
+    let bookmark = proxy.bookmark(id).unwrap();
+
+    let editable_content = format!(
+        "# Description:\n{}\n\n# Url:\n{}\n\n# Tags:\n{}",
+        bookmark.bookmark.description,
+        bookmark.bookmark.url,
+        intersperse(
+            bookmark.tags.iter().map(|tag| tag.tag.to_string()),
+            ",".to_string()
+        )
+        .collect::<String>()
+    );
+
+    file.write_all(editable_content.as_bytes()).unwrap();
+
+    Command::new(editor)
+        .arg(&file_path)
+        .status()
+        .expect("Something went wrong");
+
+    let mut editable = String::new();
+
+    File::open(file_path)
+        .expect("Could not open file")
+        .read_to_string(&mut editable)
+        .unwrap();
+
+    let lines = editable.lines().collect::<Vec<&str>>();
+
+    let description = lines[1];
+    let url = lines[4];
+
+    proxy.update_url(id, url).unwrap();
+    proxy.update_description(id, description).unwrap();
+    if lines.len() == 8 {
+        let tags = dbg!(lines[7]);
+        proxy
+            .update_tags(
+                id,
+                &tags
+                    .split(',')
+                    .map(|x| x.to_string())
+                    .collect::<Vec<String>>(),
+            )
+            .unwrap();
     }
 }

@@ -15,6 +15,10 @@ use crate::bookmark::Bookmark;
 
 pub trait BookmarkProxy {
     fn bookmarks(&self) -> Result<Vec<Bookmark>, String>;
+    fn bookmark(&self, id: i32) -> Result<Bookmark, String>;
     fn add(&self, url: &str, description: &str, tags: Vec<String>) -> Result<(), String>;
     fn delete(&self, id: i32) -> Result<(), String>;
+    fn update_description(&self, id: i32, descritption: &str) -> Result<(), String>;
+    fn update_url(&self, id: i32, url: &str) -> Result<(), String>;
+    fn update_tags(&self, id: i32, tags: &[String]) -> Result<(), String>;
 }
