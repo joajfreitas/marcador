@@ -14,6 +14,7 @@
 use copypasta::{ClipboardContext, ClipboardProvider};
 
 use crate::bookmark::Bookmark;
+use crate::bookmark_proxy::edit_bookmark;
 use crate::rofi;
 use crate::BookmarkProxy;
 
@@ -47,6 +48,11 @@ fn rofi_delete(
     proxy.delete(books[index].bookmark.id)
 }
 
+fn rofi_edit(proxy: &dyn BookmarkProxy, index: usize, books: Vec<Bookmark>) -> Result<(), String> {
+    edit_bookmark(proxy, books[index].bookmark.id, Some(true));
+    Ok(())
+}
+
 fn rofi_open(url: &str) -> Result<(), String> {
     open::with(url, "firefox").map_err(|_| "Failed to open url")?;
     Ok(())
@@ -63,13 +69,15 @@ pub fn command_rofi(proxy: &dyn BookmarkProxy) -> Result<(), String> {
     let ret = rofi::Rofi::new(&books)
         .kb_custom(1, "Alt+n")
         .kb_custom(2, "Alt+d")
+        .kb_custom(3, "Alt+e")
         .prompt("> ")
-        .message("<b>Alt+n</b>: Add new bookmark <b>Alt+d</b>: Delete bookmark")
+        .message("<b>Alt+n</b>: Add new bookmark <b>Alt+d</b>: Delete bookmark <b>Alt+e</b>: Edit bookmark")
         .run_index();
 
     match ret {
         Ok((10, _)) => rofi_add(proxy),
         Ok((11, Some(index))) => rofi_delete(proxy, index, bookmarks),
+        Ok((12, Some(index))) => rofi_edit(proxy, index, bookmarks),
         Ok((0, Some(index))) => rofi_open(&bookmarks[index].bookmark.url),
         Err(_) => Ok(()),
         _ => panic!(),

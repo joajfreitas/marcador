@@ -11,46 +11,47 @@
 // You should have received a copy of the GNU General Public License along with this
 // program. If not, see <https://www.gnu.org/licenses/>.
 
-use serde::{Deserialize, Serialize};
-
 use crate::bookmark::Bookmark;
 use crate::bookmark_proxy::BookmarkProxy;
 
-#[derive(Serialize, Deserialize)]
-pub struct AddParams {
-    pub url: String,
-    pub description: String,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct DeleteParams {
-    pub id: i32,
-}
+use crate::server::{AddParams, DeleteParams};
 
 pub struct RemoteProxy {
+    bookmark_endpoint: String,
     list_endpoint: String,
     add_endpoint: String,
     delete_endpoint: String,
+    update_description_endpoint: String,
+    update_url_endpoint: String,
+    update_tags_endpoint: String,
 }
 
 impl RemoteProxy {
     pub fn new(url: &str) -> Self {
         Self {
+            bookmark_endpoint: url.to_string() + "/bookmark",
             list_endpoint: url.to_string() + "/list",
             add_endpoint: url.to_string() + "/add",
             delete_endpoint: url.to_string() + "/delete",
+            update_description_endpoint: url.to_string() + "/update_description",
+            update_url_endpoint: url.to_string() + "/update_url",
+            update_tags_endpoint: url.to_string() + "/update_tags",
         }
     }
 }
 
 impl BookmarkProxy for RemoteProxy {
-    fn bookmark(&self, _id: i32) -> Result<Bookmark, String> {
-        //Ok(reqwest::blocking::get(&self.list_endpoint)
-        //    .map_err(|_| "Failed to get web resource")?
-        //    .json::<Vec<Bookmark>>()
-        //    .map_err(|_| "Failed to parse json")?)
-        //
-        Err("Failed to get bookmark".to_string())
+    fn bookmark(&self, id: i32) -> Result<Bookmark, String> {
+        let client = reqwest::blocking::Client::new();
+        let response = client
+            .get(&self.bookmark_endpoint)
+            .json(&id)
+            .send()
+            .map_err(|_| "Failed to send get request")?;
+
+        response
+            .json::<Bookmark>()
+            .map_err(|err| format!("{}", err))
     }
 
     fn bookmarks(&self) -> Result<Vec<Bookmark>, String> {
@@ -84,13 +85,35 @@ impl BookmarkProxy for RemoteProxy {
         Ok(())
     }
 
-    fn update_description(&self, _id: i32, _descrittion: &str) -> Result<(), String> {
+    fn update_description(&self, id: i32, description: &str) -> Result<(), String> {
+        let client = reqwest::blocking::Client::new();
+        client
+            .post(&self.update_description_endpoint)
+            .json(&(id, description))
+            .send()
+            .map_err(|_| "Failed to send post request")?;
+
         Ok(())
     }
-    fn update_url(&self, _id: i32, _url: &str) -> Result<(), String> {
+
+    fn update_url(&self, id: i32, url: &str) -> Result<(), String> {
+        let client = reqwest::blocking::Client::new();
+        client
+            .post(&self.update_url_endpoint)
+            .json(&(id, url))
+            .send()
+            .map_err(|_| "Failed to send post request")?;
+
         Ok(())
     }
-    fn update_tags(&self, _id: i32, _tags: &[String]) -> Result<(), String> {
+    fn update_tags(&self, id: i32, tags: &[String]) -> Result<(), String> {
+        let client = reqwest::blocking::Client::new();
+        client
+            .post(&self.update_tags_endpoint)
+            .json(&(id, tags))
+            .send()
+            .map_err(|_| "Failed to send post request")?;
+
         Ok(())
     }
 }

@@ -14,10 +14,11 @@
 use actix_web::{web, App, HttpServer, Result};
 use clap::Parser;
 
+use serde::{Deserialize, Serialize};
+
 use crate::bookmark::Bookmark;
 
 use crate::config::{Config, ServerConfig};
-use crate::remote_proxy::{AddParams, DeleteParams};
 use crate::{BookmarkProxy, LocalProxy};
 
 #[derive(Parser)]
@@ -35,6 +36,21 @@ pub struct Cli {
 
 struct State {
     local_proxy: LocalProxy,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct AddParams {
+    pub url: String,
+    pub description: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct DeleteParams {
+    pub id: i32,
+}
+
+async fn endpoint_bookmark(state: web::Data<State>, info: web::Json<i32>) -> web::Json<Bookmark> {
+    web::Json(state.local_proxy.bookmark(info.0).unwrap())
 }
 
 async fn endpoint_list(state: web::Data<State>) -> web::Json<Vec<Bookmark>> {
@@ -57,6 +73,36 @@ async fn endpoint_delete(
     info: web::Json<DeleteParams>,
 ) -> Result<web::Json<i32>> {
     state.local_proxy.delete(info.id).unwrap();
+    Ok(web::Json(0))
+}
+
+async fn endpoint_update_description(
+    state: web::Data<State>,
+    info: web::Json<(i32, String)>,
+) -> Result<web::Json<i32>> {
+    state
+        .local_proxy
+        .update_description(info.0 .0, &info.0 .1)
+        .unwrap();
+    Ok(web::Json(0))
+}
+
+async fn endpoint_update_url(
+    state: web::Data<State>,
+    info: web::Json<(i32, String)>,
+) -> Result<web::Json<i32>> {
+    state.local_proxy.update_url(info.0 .0, &info.0 .1).unwrap();
+    Ok(web::Json(0))
+}
+
+async fn endpoint_update_tags(
+    state: web::Data<State>,
+    info: web::Json<(i32, Vec<String>)>,
+) -> Result<web::Json<i32>> {
+    state
+        .local_proxy
+        .update_tags(info.0 .0, &info.0 .1)
+        .unwrap();
     Ok(web::Json(0))
 }
 
@@ -94,17 +140,33 @@ pub fn server(cli: Cli) -> Result<(), String> {
 }
 
 async fn async_server(db: String, host: String, port: u16, root: String) -> std::io::Result<()> {
-    let (list_endpoint, add_endpoint, delete_endpoint) = if root == "/" {
+    let (
+        bookmark_endpoint,
+        list_endpoint,
+        add_endpoint,
+        delete_endpoint,
+        update_description_endpoint,
+        update_url_endpoint,
+        update_tags_endpoint,
+    ) = if root == "/" {
         (
+            "/bookmark".to_string(),
             "/list".to_string(),
             "/add".to_string(),
             "/delete".to_string(),
+            "/update_description".to_string(),
+            "/update_url".to_string(),
+            "/update_tags".to_string(),
         )
     } else {
         (
+            root.clone() + "/bookmark",
             root.clone() + "/list",
             root.clone() + "/add",
-            root + "/delete",
+            root.clone() + "/delete",
+            root.clone() + "/update_description",
+            root.clone() + "/update_url",
+            root.clone() + "/update_tags",
         )
     };
 
@@ -113,9 +175,16 @@ async fn async_server(db: String, host: String, port: u16, root: String) -> std:
             .app_data(web::Data::new(State {
                 local_proxy: LocalProxy::new(&db),
             }))
+            .route(&bookmark_endpoint, web::get().to(endpoint_bookmark))
             .route(&list_endpoint, web::get().to(endpoint_list))
             .route(&add_endpoint, web::post().to(endpoint_add))
             .route(&delete_endpoint, web::post().to(endpoint_delete))
+            .route(
+                &update_description_endpoint,
+                web::post().to(endpoint_update_description),
+            )
+            .route(&update_url_endpoint, web::post().to(endpoint_update_url))
+            .route(&update_tags_endpoint, web::post().to(endpoint_update_tags))
     })
     .bind((host, port))?
     .run()

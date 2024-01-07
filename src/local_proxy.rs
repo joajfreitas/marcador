@@ -17,18 +17,9 @@ use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
 use dotenvy::dotenv;
 
-use itertools::intersperse;
-
-use std::{
-    env::{temp_dir, var},
-    fs::File,
-    io::{Read, Write},
-    process::Command,
-};
-
 use crate::bookmark::Bookmark;
 use crate::bookmark_proxy::BookmarkProxy;
-use crate::models::{Bookmarks, Tags, BookmarkTags};
+use crate::models::{BookmarkTags, Bookmarks, Tags};
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
@@ -227,59 +218,5 @@ impl BookmarkProxy for LocalProxy {
 
         self.insert_tags(id, &tags.to_vec())?;
         Ok(())
-    }
-}
-
-pub fn edit_bookmark(proxy: &dyn BookmarkProxy, id: i32) {
-    let editor = var("EDITOR").unwrap();
-    let mut file_path = temp_dir();
-    file_path.push("editable");
-    let mut file = File::create(&file_path).expect("Could not create file");
-
-    let bookmark = proxy.bookmark(id).unwrap();
-
-    let editable_content = format!(
-        "# Description:\n{}\n\n# Url:\n{}\n\n# Tags:\n{}",
-        bookmark.bookmark.description,
-        bookmark.bookmark.url,
-        intersperse(
-            bookmark.tags.iter().map(|tag| tag.tag.to_string()),
-            ",".to_string()
-        )
-        .collect::<String>()
-    );
-
-    file.write_all(editable_content.as_bytes()).unwrap();
-
-    Command::new(editor)
-        .arg(&file_path)
-        .status()
-        .expect("Something went wrong");
-
-    let mut editable = String::new();
-
-    File::open(file_path)
-        .expect("Could not open file")
-        .read_to_string(&mut editable)
-        .unwrap();
-
-    let lines = editable.lines().collect::<Vec<&str>>();
-
-    let description = lines[1];
-    let url = lines[4];
-
-    proxy.update_url(id, url).unwrap();
-    proxy.update_description(id, description).unwrap();
-    if lines.len() == 8 {
-        let tags = dbg!(lines[7]);
-        proxy
-            .update_tags(
-                id,
-                &tags
-                    .split(',')
-                    .map(|x| x.to_string())
-                    .collect::<Vec<String>>(),
-            )
-            .unwrap();
     }
 }

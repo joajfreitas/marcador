@@ -24,9 +24,10 @@ pub mod server;
 
 use clap::{Parser, Subcommand};
 
+use bookmark_proxy::edit_bookmark;
 use bookmark_proxy::BookmarkProxy;
 use config::Config;
-use local_proxy::{edit_bookmark, LocalProxy};
+use local_proxy::LocalProxy;
 use remote_proxy::RemoteProxy;
 use rofi_interface::command_rofi;
 
@@ -95,7 +96,10 @@ pub fn marcador(cli: Cli) -> Result<(), String> {
             Ok(())
         }
         Commands::Delete { index } => proxy.delete(index),
-        Commands::Edit { index } => {edit_bookmark(&*proxy, index); Ok(())},
+        Commands::Edit { index } => {
+            edit_bookmark(&*proxy, index, None);
+            Ok(())
+        }
     }?;
 
     Ok(())
