@@ -39,8 +39,6 @@ pub fn edit_bookmark(proxy: &dyn BookmarkProxy, id: i32, visual: Option<bool>) {
         var("VISUAL").unwrap()
     };
 
-    dbg!(&editor);
-
     let split: Vec<String> = editor.split(' ').map(|x| x.to_string()).collect();
     let editor = &split[0];
     let mut args: Vec<String> = split[1..].iter().map(|x| x.to_string()).collect();
@@ -83,9 +81,9 @@ pub fn edit_bookmark(proxy: &dyn BookmarkProxy, id: i32, visual: Option<bool>) {
     let url = lines[4];
 
     proxy.update_url(id, url).unwrap();
-    proxy.update_description(id, dbg!(description)).unwrap();
+    proxy.update_description(id, description).unwrap();
     if lines.len() == 8 {
-        let tags = dbg!(lines[7]);
+        let tags = lines[7];
         proxy
             .update_tags(
                 id,
