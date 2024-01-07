@@ -13,9 +13,8 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::bookmark_proxy::BookmarkProxy;
 use crate::bookmark::Bookmark;
-
+use crate::bookmark_proxy::BookmarkProxy;
 
 #[derive(Serialize, Deserialize)]
 pub struct AddParams {
@@ -45,6 +44,15 @@ impl RemoteProxy {
 }
 
 impl BookmarkProxy for RemoteProxy {
+    fn bookmark(&self, _id: i32) -> Result<Bookmark, String> {
+        //Ok(reqwest::blocking::get(&self.list_endpoint)
+        //    .map_err(|_| "Failed to get web resource")?
+        //    .json::<Vec<Bookmark>>()
+        //    .map_err(|_| "Failed to parse json")?)
+        //
+        Err("Failed to get bookmark".to_string())
+    }
+
     fn bookmarks(&self) -> Result<Vec<Bookmark>, String> {
         Ok(reqwest::blocking::get(&self.list_endpoint)
             .map_err(|_| "Failed to get web resource")?
@@ -73,6 +81,16 @@ impl BookmarkProxy for RemoteProxy {
             .send()
             .map_err(|_| "Failed to send post request")?;
 
+        Ok(())
+    }
+
+    fn update_description(&self, _id: i32, _descrittion: &str) -> Result<(), String> {
+        Ok(())
+    }
+    fn update_url(&self, _id: i32, _url: &str) -> Result<(), String> {
+        Ok(())
+    }
+    fn update_tags(&self, _id: i32, _tags: &[String]) -> Result<(), String> {
         Ok(())
     }
 }

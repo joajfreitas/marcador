@@ -16,9 +16,9 @@ use clap::Parser;
 
 use crate::bookmark::Bookmark;
 
-use crate::{BookmarkProxy, LocalProxy};
 use crate::config::{Config, ServerConfig};
 use crate::remote_proxy::{AddParams, DeleteParams};
+use crate::{BookmarkProxy, LocalProxy};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
